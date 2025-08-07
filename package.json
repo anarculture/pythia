@@ -1,0 +1,24 @@
+{
+  "name": "encantar2",
+  "version": "0.1.0",
+  "description": "Next-generation GPU-accelerated Augmented Reality framework for the web",
+  "author": "anarculture",
+  "license": "MIT",
+  "type": "module",
+  "main": "src/index.ts",
+  "scripts": {
+    "build": "echo 'Build script to be implemented'",
+    "dev": "echo 'Development server to be implemented'",
+    "test": "echo 'Tests to be implemented'"
+  },
+  "keywords": [
+    "augmented reality",
+    "ar",
+    "webxr",
+    "webgl",
+    "typescript",
+    "gpu-accelerated"
+  ],
+  "devDependencies": {},
+  "dependencies": {}
+}
