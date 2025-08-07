@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1, maximum-scale=1">
     <title>encantar.js WebAR demo</title>
-    <script src="encantar.js"></script>
+    <script src="https://encantar.dev/dist/encantar.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/aframe@1.6.0/dist/aframe-v1.6.0.min.js"></script>
     <script src="https://encantar.dev/dist/plugins/aframe-with-encantar.min.js"></script>
     <style>
@@ -37,6 +37,12 @@
         <ar-viewport>
             <ar-hud>
                 <img id="scan" src="scan.png" draggable="false" style="width: 100%; height: 100%; object-fit: contain; opacity: 0.75;">
+                <!-- Info overlay for multiple scenes -->
+                <div id="scene-info" onclick="toggleScene()" style="position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.7); color: white; padding: 10px; border-radius: 5px; font-family: Arial; font-size: 12px; cursor: pointer; border: 2px solid #4CAF50;">
+                    <div>📱 <span id="current-scene">Scene 1</span> Active</div>
+                    <div>🎯 Point camera at reference image</div>
+                    <div>👆 Click here to switch scenes!</div>
+                </div>
             </ar-hud>
         </ar-viewport>
         
@@ -44,12 +50,47 @@
         <ar-camera></ar-camera>
         
         <!-- Root node: this will be displayed in AR -->
-        <ar-root reference-image="my-reference-image">
+        <ar-root id="scene1" reference-image="my-reference-image">
             <a-box color="yellow" position="0 0 0.5" scale="0.5 0.5 0.5"></a-box>
             <a-sphere color="red" position="1 0 0.5" radius="0.3"></a-sphere>
             <a-cylinder color="blue" position="-1 0 0.5" radius="0.3" height="1"></a-cylinder>
         </ar-root>
         
+        <!-- Second virtual scene (initially hidden) -->
+        <ar-root id="scene2" reference-image="my-reference-image" visible="false">
+            <a-torus color="purple" position="0 0 0.8" radius="0.5" radius-tubular="0.1"
+                     animation="property: rotation; to: 0 360 0; loop: true; dur: 4000"></a-torus>
+            <a-octahedron color="orange" position="0.8 0 0.3" radius="0.3"
+                          animation="property: rotation; to: 360 0 360; loop: true; dur: 3000"></a-octahedron>
+            <a-tetrahedron color="green" position="-0.8 0 0.3" radius="0.3"
+                           animation="property: rotation; to: 0 360 360; loop: true; dur: 2000"></a-tetrahedron>
+            <a-text value="Scene 2!" position="0 -1 0.2" align="center" color="white"></a-text>
+        </ar-root>
+        
     </a-scene>
+    
+    <script>
+        let currentScene = 1;
+        
+        function toggleScene() {
+            const scene1 = document.getElementById('scene1');
+            const scene2 = document.getElementById('scene2');
+            const sceneLabel = document.getElementById('current-scene');
+            
+            if (currentScene === 1) {
+                // Switch to Scene 2
+                scene1.setAttribute('visible', 'false');
+                scene2.setAttribute('visible', 'true');
+                sceneLabel.textContent = 'Scene 2';
+                currentScene = 2;
+            } else {
+                // Switch to Scene 1
+                scene1.setAttribute('visible', 'true');
+                scene2.setAttribute('visible', 'false');
+                sceneLabel.textContent = 'Scene 1';
+                currentScene = 1;
+            }
+        }
+    </script>
 </body>
 </html>
