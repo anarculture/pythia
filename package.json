@@ -7,8 +7,11 @@
   "type": "module",
   "main": "src/index.ts",
   "scripts": {
-    "build": "echo 'Build script to be implemented'",
-    "dev": "echo 'Development server to be implemented'",
+    "build": "tsc",
+    "build:check": "tsc --noEmit",
+    "clean": "rm -rf dist",
+    "dev": "python3 -m http.server 8000",
+    "dev:open": "python3 -m http.server 8000 & sleep 2 && echo 'Server started at http://localhost:8000'",
     "test": "echo 'Tests to be implemented'"
   },
   "keywords": [
@@ -19,6 +22,7 @@
     "typescript",
     "gpu-accelerated"
   ],
-  "devDependencies": {},
-  "dependencies": {}
+  "devDependencies": {
+    "typescript": "^5.9.2"
+  }
 }
