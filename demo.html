@@ -65,11 +65,12 @@
     </div>
 
     <script type="module">
-        import Encantar2, { Vec2 } from './dist/index.js';
+        import Encantar2, { Vec2, Vec3 } from './dist/index.js';
         
         // Make it globally available for the button
         window.Encantar2 = Encantar2;
         window.Vec2 = Vec2;
+        window.Vec3 = Vec3;
         
         // Test basic loading
         try {
@@ -115,6 +116,24 @@
                 
                 consoleDiv.textContent += `v1.dot(v2) = ${v1.dot(v2)}\n`;
                 consoleDiv.textContent += '✅ Vec2 tests passed!\n';
+                
+                // Test Vec3 class
+                consoleDiv.textContent += '\n--- Testing Vec3 class ---\n';
+                const v3d1 = new window.Vec3(1, 2, 3);
+                const v3d2 = new window.Vec3(4, 5, 6);
+                
+                consoleDiv.textContent += `v3d1 = ${v3d1.toString()}\n`;
+                consoleDiv.textContent += `v3d2 = ${v3d2.toString()}\n`;
+                consoleDiv.textContent += `v3d1.length() = ${v3d1.length().toFixed(3)}\n`;
+                
+                const v3d3 = window.Vec3.add(v3d1, v3d2);
+                consoleDiv.textContent += `Vec3.add(v3d1, v3d2) = ${v3d3.toString()}\n`;
+                
+                const v3d4 = v3d1.clone().cross(v3d2);
+                consoleDiv.textContent += `v3d1.cross(v3d2) = ${v3d4.toString()}\n`;
+                
+                consoleDiv.textContent += `v3d1.dot(v3d2) = ${v3d1.dot(v3d2)}\n`;
+                consoleDiv.textContent += '✅ Vec3 tests passed!\n';
                 
             } catch (error) {
                 consoleDiv.textContent += `Error: ${error.message}\n`;

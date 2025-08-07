@@ -7,7 +7,7 @@
 
 // Vector classes
 export { Vec2 } from './vec2.js';
-// export { Vec3 } from './vec3';
+export { Vec3 } from './vec3.js';
 
 // Matrix classes (to be implemented)
 // export { Mat3 } from './mat3';

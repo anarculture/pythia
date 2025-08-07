@@ -1,11 +1,11 @@
 /**
  * encantar2 - Next-generation GPU-accelerated Augmented Reality framework
- * 
+ *
  * Main entry point for the encantar2 library
  */
 
 // Import math utilities
-import { MathModule, Vec2 } from './math/index.js';
+import { MathModule, Vec2, Vec3 } from './math/index.js';
 
 export class Encantar2 {
     private initialized: boolean = false;
@@ -39,7 +39,7 @@ export class Encantar2 {
 }
 
 // Export math utilities
-export { Vec2 };
+export { Vec2, Vec3 };
 
 // Default export
 export default Encantar2;
