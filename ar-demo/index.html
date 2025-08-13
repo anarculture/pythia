@@ -97,6 +97,50 @@
             }
         }
 
+        /* Scene switcher styling */
+        #scene-switcher {
+            position: absolute !important;
+            bottom: 20px !important;
+            left: 50% !important;
+            transform: translateX(-50%) !important;
+            display: flex !important;
+            gap: 10px !important;
+            z-index: 1000 !important;
+        }
+
+        .scene-btn {
+            background: rgba(0,0,0,0.8) !important;
+            color: white !important;
+            border: 2px solid #4CAF50 !important;
+            padding: 8px 16px !important;
+            border-radius: 20px !important;
+            font-family: Arial, sans-serif !important;
+            font-size: 12px !important;
+            cursor: pointer !important;
+            backdrop-filter: blur(5px) !important;
+            transition: all 0.3s ease !important;
+        }
+
+        .scene-btn:hover {
+            background: rgba(76, 175, 80, 0.3) !important;
+            transform: scale(1.05) !important;
+        }
+
+        .scene-btn.active {
+            background: rgba(76, 175, 80, 0.8) !important;
+            border-color: #81C784 !important;
+        }
+
+        @media (max-width: 768px) {
+            #scene-switcher {
+                bottom: 15px !important;
+            }
+            .scene-btn {
+                font-size: 11px !important;
+                padding: 6px 12px !important;
+            }
+        }
+
         /* Prevent zoom and scrolling on mobile */
         body {
             touch-action: manipulation;
@@ -127,11 +171,17 @@
         <ar-viewport>
             <ar-hud>
                 <img id="scan" src="scan.png" draggable="false" style="width: 100%; height: 100%; object-fit: contain; opacity: 0.75;">
-                <!-- Info overlay for Cryptobrick character -->
-                <div id="character-info" style="position: fixed; top: 15px; right: 15px; background: rgba(0,0,0,0.9); color: white; padding: 12px; border-radius: 8px; font-family: Arial, sans-serif; font-size: 14px; border: 3px solid #4CAF50; box-shadow: 0 4px 8px rgba(0,0,0,0.6); z-index: 99999; max-width: 180px;">
-                    <div style="font-weight: bold; color: #4CAF50;">🧿 CRYPTOBRICK</div>
+                <!-- Dynamic info overlay -->
+                <div id="scene-info" style="position: fixed; top: 15px; right: 15px; background: rgba(0,0,0,0.9); color: white; padding: 12px; border-radius: 8px; font-family: Arial, sans-serif; font-size: 14px; border: 3px solid #4CAF50; box-shadow: 0 4px 8px rgba(0,0,0,0.6); z-index: 99999; max-width: 180px;">
+                    <div id="scene-title" style="font-weight: bold; color: #4CAF50;">🧿 CRYPTOBRICK</div>
                     <div style="margin: 4px 0; font-size: 12px; color: #CCC;">📷 Point camera at marker</div>
-                    <div style="color: #FFD700; font-weight: bold;">🎆 PIXEL ART CHARACTER!</div>
+                    <div id="scene-description" style="color: #FFD700; font-weight: bold;">🎆 PIXEL ART CHARACTER!</div>
+                </div>
+
+                <!-- Scene switcher buttons -->
+                <div id="scene-switcher">
+                    <button class="scene-btn active" onclick="switchScene(1)">🧿 Cryptobrick</button>
+                    <button class="scene-btn" onclick="switchScene(2)">🎭 Rostro y Círculo</button>
                 </div>
             </ar-hud>
         </ar-viewport>
@@ -160,54 +210,112 @@
         <ar-root id="scene3" reference-image="my-reference-image" visible="false">
             <a-entity id="wave-field" quantum-wave-field></a-entity>
             <a-entity id="particle-system" advanced-particles></a-entity>
-            <a-sphere id="morph-sphere" position="0 0 0.5" radius="0.3" 
+            <a-sphere id="morph-sphere" position="0 0 0.5" radius="0.3"
                       color="#FF6B6B" morphing-geometry></a-sphere>
-            <a-text value="QUANTUM FIELD" position="0 -1.2 0" align="center" 
+            <a-text value="QUANTUM FIELD" position="0 -1.2 0" align="center"
                     color="cyan" reactive-text></a-text>
         </ar-root>
 
         <ar-root id="scene4" reference-image="my-reference-image" visible="false">
-            <a-gltf-model id="user-model" src="model.glb" 
-                          position="0 0 0.5" 
+            <a-gltf-model id="user-model" src="model.glb"
+                          position="0 0 0.5"
                           scale="0.5 0.5 0.5"
                           animation="property: rotation; to: 0 360 0; loop: true; dur: 4000"
                           shadow="cast: true; receive: true">
             </a-gltf-model>
             <a-light type="ambient" color="#ffffff" intensity="0.6"></a-light>
             <a-light type="directional" position="2 4 2" color="#ffffff" intensity="0.8"></a-light>
-            <a-text value="YOUR 3D MODEL!" position="0 -1 0" align="center" 
+            <a-text value="YOUR 3D MODEL!" position="0 -1 0" align="center"
                     color="#FFD700" font="kelsonsans"></a-text>
         </ar-root>
         -->
 
-        <!-- MAIN SCENE - CRYPTOBRICK PIXEL ART CHARACTER -->
-        <ar-root id="cryptobrick-scene" reference-image="my-reference-image" visible="true">
+        <!-- SCENE 1 - CRYPTOBRICK PIXEL ART CHARACTER -->
+        <ar-root id="scene1" reference-image="my-reference-image" visible="true">
             <!-- Cryptobrick Character Model -->
-            <a-gltf-model id="cryptobrick-character" 
-                          src="cryptobrick.glb" 
-                          position="0 0 0.3" 
+            <a-gltf-model id="cryptobrick-character"
+                          src="cryptobrick.glb"
+                          position="0 0 0.3"
                           scale="1 1 1"
                           cryptobrick-dance-animation
                           shadow="cast: true; receive: true">
             </a-gltf-model>
-            
+
             <!-- Professional lighting setup -->
             <a-light type="ambient" color="#ffffff" intensity="0.7"></a-light>
             <a-light type="directional" position="3 5 3" color="#ffffff" intensity="0.9" shadow="cast: true"></a-light>
             <a-light type="point" position="-2 3 2" color="#4CAF50" intensity="0.3"></a-light>
         </ar-root>
 
+        <!-- SCENE 2 - ROSTRO Y CÍRCULO MODEL -->
+        <ar-root id="scene2" reference-image="my-reference-image" visible="false">
+            <!-- Rostro y Círculo Model -->
+            <a-gltf-model id="rostro-circulo-model"
+                          src="rostro y circulo.glb"
+                          position="0 0 0.2"
+                          scale="0.8 0.8 0.8"
+                          animation="property: rotation; to: 0 360 0; loop: true; dur: 8000"
+                          shadow="cast: true; receive: true">
+            </a-gltf-model>
+
+            <!-- Artistic lighting for the face and circle -->
+            <a-light type="ambient" color="#ffffff" intensity="0.6"></a-light>
+            <a-light type="directional" position="2 4 3" color="#ffffff" intensity="0.8" shadow="cast: true"></a-light>
+            <a-light type="point" position="-1 2 1" color="#FF6B6B" intensity="0.4"></a-light>
+            <a-light type="point" position="1 2 1" color="#4ECDC4" intensity="0.4"></a-light>
+
+            <!-- Decorative elements -->
+            <a-ring position="0 -0.8 0.1" radius-inner="0.3" radius-outer="0.4"
+                    color="#FFD700" opacity="0.7"
+                    animation="property: rotation; to: 0 0 360; loop: true; dur: 6000"></a-ring>
+        </ar-root>
+
     </a-scene>
 
     <script>
-        // SIMPLIFIED SCRIPT - FOCUSING ON CRYPTOBRICK CHARACTER ONLY
-        
+        // MULTI-SCENE AR DEMO - CRYPTOBRICK & ROSTRO Y CÍRCULO
+
+        let currentScene = 1;
+
+        // Scene switching function
+        function switchScene(sceneNumber) {
+            // Hide all scenes
+            const scene1 = document.getElementById('scene1');
+            const scene2 = document.getElementById('scene2');
+
+            scene1.setAttribute('visible', 'false');
+            scene2.setAttribute('visible', 'false');
+
+            // Show selected scene
+            if (sceneNumber === 1) {
+                scene1.setAttribute('visible', 'true');
+                updateSceneInfo('🧿 CRYPTOBRICK', '🎆 PIXEL ART CHARACTER!');
+            } else if (sceneNumber === 2) {
+                scene2.setAttribute('visible', 'true');
+                updateSceneInfo('🎭 ROSTRO Y CÍRCULO', '🎨 ARTISTIC 3D MODEL!');
+            }
+
+            // Update button states
+            document.querySelectorAll('.scene-btn').forEach((btn, index) => {
+                btn.classList.toggle('active', index + 1 === sceneNumber);
+            });
+
+            currentScene = sceneNumber;
+            console.log(`Switched to Scene ${sceneNumber}`);
+        }
+
+        // Update scene info display
+        function updateSceneInfo(title, description) {
+            document.getElementById('scene-title').textContent = title;
+            document.getElementById('scene-description').textContent = description;
+        }
+
         // All complex scene switching and procedural animations commented out
         // Now we have a single scene with the Cryptobrick character
-        
+
         console.log('🧿 CRYPTOBRICK AR CHARACTER LOADED!');
         console.log('📷 Point your camera at the pixel art marker to see the character!');
-        
+
         // Optional: Add any Cryptobrick-specific interactions here later
         // For now, the character will just rotate automatically as defined in the HTML
 
@@ -216,7 +324,7 @@
         // All the quantum wave field, particle systems, and morphing geometry
         // components are commented out since we're focusing on Cryptobrick only
         */
-        
+
         // 💃 CRYPTOBRICK DANCE ANIMATION - Epic dance moves!
         AFRAME.registerComponent('cryptobrick-dance-animation', {
             init: function () {
@@ -225,7 +333,7 @@
                 this.danceInterval = 4000; // Dance every 4 seconds
                 this.lastDanceTime = 0;
                 this.basePosition = { x: 0, y: 0, z: 0.3 };
-                
+
                 console.log('💃 Cryptobrick dance animation initialized!');
             },
 
@@ -235,52 +343,52 @@
                     this.startDance();
                     this.lastDanceTime = time;
                 }
-                
+
                 // If currently dancing, animate the dance
                 if (this.isDancing) {
                     this.animateDance(time);
                 }
             },
-            
+
             startDance: function () {
                 this.isDancing = true;
                 this.danceTimer = 0;
                 console.log('💃 Cryptobrick is dancing! Let\'s groove!');
             },
-            
+
             animateDance: function (time) {
                 // Dance animation duration: 3 seconds
                 const danceDuration = 3000;
                 this.danceTimer += 16; // Approximate frame time
-                
+
                 if (this.danceTimer < danceDuration) {
                     // Create epic dance moves using multiple sine waves
                     const progress = this.danceTimer / danceDuration;
-                    
+
                     // Different dance move phases
                     const beat = Math.sin(progress * Math.PI * 8) * 0.4; // 8 beats in 3 seconds
                     const groove = Math.cos(progress * Math.PI * 6) * 0.3; // Side to side groove
                     const bounce = Math.sin(progress * Math.PI * 12) * 0.15; // Quick bounces
                     const spin = Math.sin(progress * Math.PI * 2) * 20; // Slow spin during dance
-                    
+
                     // Epic dance moves!
                     const rotationX = bounce * 8; // Head bobbing
                     const rotationY = spin + groove * 25; // Spinning + side groove
                     const rotationZ = beat * 12; // Shoulder movement
-                    
+
                     // Bouncy movement
                     const positionX = groove * 0.2; // Side to side
                     const positionY = this.basePosition.z + Math.abs(bounce) * 0.3; // Bouncing up
                     const positionZ = this.basePosition.z + beat * 0.1; // Forward/back groove
-                    
+
                     // Scale pulsing with the beat
                     const scale = 1 + Math.abs(beat) * 0.1;
-                    
+
                     // Apply the dance moves!
                     this.el.setAttribute('rotation', `${rotationX} ${rotationY} ${rotationZ}`);
                     this.el.setAttribute('position', `${positionX} 0 ${positionY}`);
                     this.el.setAttribute('scale', `${scale} ${scale} ${scale}`);
-                    
+
                 } else {
                     // Dance finished, return to neutral position
                     this.isDancing = false;
@@ -291,7 +399,7 @@
                 }
             }
         });
-        
+
         // Ready for Cryptobrick!
         console.log('🧿 CRYPTOBRICK CHARACTER READY!');
         console.log('💃 Dance animation loaded - Cryptobrick will dance every 4 seconds!');
