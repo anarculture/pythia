@@ -8,55 +8,145 @@
     <script src="https://cdn.jsdelivr.net/npm/aframe@1.6.0/dist/aframe-v1.6.0.min.js"></script>
     <script src="https://encantar.dev/dist/plugins/aframe-with-encantar.min.js"></script>
     <style>
-        body { background-color: #3d5afe; }
+        /* Reset and mobile-first approach */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #000;
+            font-family: Arial, sans-serif;
+        }
+
+        /* A-Frame scene full viewport */
+        a-scene {
+            width: 100vw !important;
+            height: 100vh !important;
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+        }
+
+        /* AR viewport full screen */
+        ar-viewport {
+            width: 100% !important;
+            height: 100% !important;
+        }
+
+        /* HUD responsive styling */
+        ar-hud {
+            width: 100% !important;
+            height: 100% !important;
+            position: relative !important;
+        }
+
         #scan {
             width: 100%;
             height: 100%;
             object-fit: contain;
             opacity: 0.75;
         }
+
+        /* Scene info overlay - responsive */
+        #scene-info {
+            position: absolute !important;
+            top: 10px !important;
+            right: 10px !important;
+            background: rgba(0,0,0,0.8) !important;
+            color: white !important;
+            padding: 8px 12px !important;
+            border-radius: 8px !important;
+            font-family: Arial, sans-serif !important;
+            font-size: 12px !important;
+            cursor: pointer !important;
+            border: 2px solid #4CAF50 !important;
+            z-index: 1000 !important;
+            max-width: 200px !important;
+            backdrop-filter: blur(5px) !important;
+        }
+
+        /* Mobile specific adjustments */
+        @media (max-width: 768px) {
+            #scene-info {
+                font-size: 11px !important;
+                padding: 6px 10px !important;
+                top: 5px !important;
+                right: 5px !important;
+                max-width: 180px !important;
+            }
+        }
+
+        /* Portrait orientation optimization */
+        @media (orientation: portrait) {
+            #scene-info {
+                top: 10px !important;
+                right: 10px !important;
+            }
+        }
+
+        /* Landscape orientation optimization */
+        @media (orientation: landscape) {
+            #scene-info {
+                top: 5px !important;
+                right: 5px !important;
+            }
+        }
+
+        /* Prevent zoom and scrolling on mobile */
+        body {
+            touch-action: manipulation;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
     </style>
 </head>
 <body>
     <!-- A-Frame AR Scene -->
-    <a-scene encantar="stats: true; gizmos: true" loading-screen="enabled: false">
-        
+    <a-scene encantar="stats: true; gizmos: true; powerPreference: high-performance" loading-screen="enabled: false">
+
         <!-- Sources of data -->
         <ar-sources>
             <ar-camera-source></ar-camera-source> <!-- webcam -->
         </ar-sources>
-        
+
         <!-- Trackers -->
         <ar-trackers>
             <ar-image-tracker>
-                <ar-reference-image name="my-reference-image" src="my-reference-image.webp"></ar-reference-image>
+                <ar-reference-image name="my-reference-image" src="custom-reference.png"></ar-reference-image>
             </ar-image-tracker>
         </ar-trackers>
-        
+
         <!-- AR Viewport -->
         <ar-viewport>
             <ar-hud>
                 <img id="scan" src="scan.png" draggable="false" style="width: 100%; height: 100%; object-fit: contain; opacity: 0.75;">
-                <!-- Info overlay for multiple scenes -->
-                <div id="scene-info" onclick="toggleScene()" style="position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.7); color: white; padding: 10px; border-radius: 5px; font-family: Arial; font-size: 12px; cursor: pointer; border: 2px solid #4CAF50;">
-                    <div>📱 <span id="current-scene">Scene 1</span> Active</div>
-                    <div>🎯 Point camera at reference image</div>
-                    <div>👆 Click here to switch scenes!</div>
+                <!-- Info overlay for Cryptobrick character -->
+                <div id="character-info" style="position: fixed; top: 15px; right: 15px; background: rgba(0,0,0,0.9); color: white; padding: 12px; border-radius: 8px; font-family: Arial, sans-serif; font-size: 14px; border: 3px solid #4CAF50; box-shadow: 0 4px 8px rgba(0,0,0,0.6); z-index: 99999; max-width: 180px;">
+                    <div style="font-weight: bold; color: #4CAF50;">🧿 CRYPTOBRICK</div>
+                    <div style="margin: 4px 0; font-size: 12px; color: #CCC;">📷 Point camera at marker</div>
+                    <div style="color: #FFD700; font-weight: bold;">🎆 PIXEL ART CHARACTER!</div>
                 </div>
             </ar-hud>
         </ar-viewport>
-        
+
         <!-- Virtual camera for AR -->
         <ar-camera></ar-camera>
-        
-        <!-- Root node: this will be displayed in AR -->
-        <ar-root id="scene1" reference-image="my-reference-image">
-            <a-box color="yellow" position="0 0 0.5" scale="0.5 0.5 0.5"></a-box>
+
+        <!-- COMMENTED OUT SCENES - FOCUSING ON CRYPTOBRICK CHARACTER -->
+        <!--
+        <ar-root id="scene1" reference-image="my-reference-image" visible="true">
+            <a-box color="yellow" position="0 0 0.5" width="1" height="1" depth="1"></a-box>
             <a-sphere color="red" position="1 0 0.5" radius="0.3"></a-sphere>
             <a-cylinder color="blue" position="-1 0 0.5" radius="0.3" height="1"></a-cylinder>
         </ar-root>
-        
-        <!-- Second virtual scene (initially hidden) -->
+
         <ar-root id="scene2" reference-image="my-reference-image" visible="false">
             <a-torus color="purple" position="0 0 0.8" radius="0.5" radius-tubular="0.1"
                      animation="property: rotation; to: 0 360 0; loop: true; dur: 4000"></a-torus>
@@ -66,31 +156,147 @@
                            animation="property: rotation; to: 0 360 360; loop: true; dur: 2000"></a-tetrahedron>
             <a-text value="Scene 2!" position="0 -1 0.2" align="center" color="white"></a-text>
         </ar-root>
-        
-    </a-scene>
-    
-    <script>
-        let currentScene = 1;
-        
-        function toggleScene() {
-            const scene1 = document.getElementById('scene1');
-            const scene2 = document.getElementById('scene2');
-            const sceneLabel = document.getElementById('current-scene');
+
+        <ar-root id="scene3" reference-image="my-reference-image" visible="false">
+            <a-entity id="wave-field" quantum-wave-field></a-entity>
+            <a-entity id="particle-system" advanced-particles></a-entity>
+            <a-sphere id="morph-sphere" position="0 0 0.5" radius="0.3" 
+                      color="#FF6B6B" morphing-geometry></a-sphere>
+            <a-text value="QUANTUM FIELD" position="0 -1.2 0" align="center" 
+                    color="cyan" reactive-text></a-text>
+        </ar-root>
+
+        <ar-root id="scene4" reference-image="my-reference-image" visible="false">
+            <a-gltf-model id="user-model" src="model.glb" 
+                          position="0 0 0.5" 
+                          scale="0.5 0.5 0.5"
+                          animation="property: rotation; to: 0 360 0; loop: true; dur: 4000"
+                          shadow="cast: true; receive: true">
+            </a-gltf-model>
+            <a-light type="ambient" color="#ffffff" intensity="0.6"></a-light>
+            <a-light type="directional" position="2 4 2" color="#ffffff" intensity="0.8"></a-light>
+            <a-text value="YOUR 3D MODEL!" position="0 -1 0" align="center" 
+                    color="#FFD700" font="kelsonsans"></a-text>
+        </ar-root>
+        -->
+
+        <!-- MAIN SCENE - CRYPTOBRICK PIXEL ART CHARACTER -->
+        <ar-root id="cryptobrick-scene" reference-image="my-reference-image" visible="true">
+            <!-- Cryptobrick Character Model -->
+            <a-gltf-model id="cryptobrick-character" 
+                          src="cryptobrick.glb" 
+                          position="0 0 0.3" 
+                          scale="1 1 1"
+                          cryptobrick-dance-animation
+                          shadow="cast: true; receive: true">
+            </a-gltf-model>
             
-            if (currentScene === 1) {
-                // Switch to Scene 2
-                scene1.setAttribute('visible', 'false');
-                scene2.setAttribute('visible', 'true');
-                sceneLabel.textContent = 'Scene 2';
-                currentScene = 2;
-            } else {
-                // Switch to Scene 1
-                scene1.setAttribute('visible', 'true');
-                scene2.setAttribute('visible', 'false');
-                sceneLabel.textContent = 'Scene 1';
-                currentScene = 1;
+            <!-- Professional lighting setup -->
+            <a-light type="ambient" color="#ffffff" intensity="0.7"></a-light>
+            <a-light type="directional" position="3 5 3" color="#ffffff" intensity="0.9" shadow="cast: true"></a-light>
+            <a-light type="point" position="-2 3 2" color="#4CAF50" intensity="0.3"></a-light>
+        </ar-root>
+
+    </a-scene>
+
+    <script>
+        // SIMPLIFIED SCRIPT - FOCUSING ON CRYPTOBRICK CHARACTER ONLY
+        
+        // All complex scene switching and procedural animations commented out
+        // Now we have a single scene with the Cryptobrick character
+        
+        console.log('🧿 CRYPTOBRICK AR CHARACTER LOADED!');
+        console.log('📷 Point your camera at the pixel art marker to see the character!');
+        
+        // Optional: Add any Cryptobrick-specific interactions here later
+        // For now, the character will just rotate automatically as defined in the HTML
+
+        /*
+        // COMMENTED OUT - COMPLEX PROCEDURAL ANIMATIONS
+        // All the quantum wave field, particle systems, and morphing geometry
+        // components are commented out since we're focusing on Cryptobrick only
+        */
+        
+        // 💃 CRYPTOBRICK DANCE ANIMATION - Epic dance moves!
+        AFRAME.registerComponent('cryptobrick-dance-animation', {
+            init: function () {
+                this.danceTimer = 0;
+                this.isDancing = false;
+                this.danceInterval = 4000; // Dance every 4 seconds
+                this.lastDanceTime = 0;
+                this.basePosition = { x: 0, y: 0, z: 0.3 };
+                
+                console.log('💃 Cryptobrick dance animation initialized!');
+            },
+
+            tick: function (time) {
+                // Check if it's time to dance
+                if (time - this.lastDanceTime > this.danceInterval) {
+                    this.startDance();
+                    this.lastDanceTime = time;
+                }
+                
+                // If currently dancing, animate the dance
+                if (this.isDancing) {
+                    this.animateDance(time);
+                }
+            },
+            
+            startDance: function () {
+                this.isDancing = true;
+                this.danceTimer = 0;
+                console.log('💃 Cryptobrick is dancing! Let\'s groove!');
+            },
+            
+            animateDance: function (time) {
+                // Dance animation duration: 3 seconds
+                const danceDuration = 3000;
+                this.danceTimer += 16; // Approximate frame time
+                
+                if (this.danceTimer < danceDuration) {
+                    // Create epic dance moves using multiple sine waves
+                    const progress = this.danceTimer / danceDuration;
+                    
+                    // Different dance move phases
+                    const beat = Math.sin(progress * Math.PI * 8) * 0.4; // 8 beats in 3 seconds
+                    const groove = Math.cos(progress * Math.PI * 6) * 0.3; // Side to side groove
+                    const bounce = Math.sin(progress * Math.PI * 12) * 0.15; // Quick bounces
+                    const spin = Math.sin(progress * Math.PI * 2) * 20; // Slow spin during dance
+                    
+                    // Epic dance moves!
+                    const rotationX = bounce * 8; // Head bobbing
+                    const rotationY = spin + groove * 25; // Spinning + side groove
+                    const rotationZ = beat * 12; // Shoulder movement
+                    
+                    // Bouncy movement
+                    const positionX = groove * 0.2; // Side to side
+                    const positionY = this.basePosition.z + Math.abs(bounce) * 0.3; // Bouncing up
+                    const positionZ = this.basePosition.z + beat * 0.1; // Forward/back groove
+                    
+                    // Scale pulsing with the beat
+                    const scale = 1 + Math.abs(beat) * 0.1;
+                    
+                    // Apply the dance moves!
+                    this.el.setAttribute('rotation', `${rotationX} ${rotationY} ${rotationZ}`);
+                    this.el.setAttribute('position', `${positionX} 0 ${positionY}`);
+                    this.el.setAttribute('scale', `${scale} ${scale} ${scale}`);
+                    
+                } else {
+                    // Dance finished, return to neutral position
+                    this.isDancing = false;
+                    this.el.setAttribute('rotation', '0 0 0');
+                    this.el.setAttribute('position', '0 0 0.3');
+                    this.el.setAttribute('scale', '1 1 1');
+                    console.log('💃 Dance complete! That was epic! Waiting for next dance...');
+                }
             }
-        }
+        });
+        
+        // Ready for Cryptobrick!
+        console.log('🧿 CRYPTOBRICK CHARACTER READY!');
+        console.log('💃 Dance animation loaded - Cryptobrick will dance every 4 seconds!');
+        console.log('📷 Point your camera at the pixel art marker to see Cryptobrick dancing!');
+        console.log('🎵 Get ready for some epic dance moves! 🕺');
     </script>
 </body>
 </html>
