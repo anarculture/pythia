@@ -1,0 +1,10 @@
+[33m7e48ddc[m[33m ([m[1;36mHEAD -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m)[m Fix index.html - update to use base_basic_shaded.glb model with correct settings
+[33m4076ed4[m Fix Vercel deployment - move files to root directory and add vercel.json config
+[33m3bd8fb0[m Clean up project structure - remove duplicates and unnecessary files, consolidate to public/ directory
+[33m1e9b491[m Update public directory with base_basic_shaded.glb AR demo for Vercel deployment
+[33m36994f8[m Update AR demo with base_basic_shaded.glb model - single scene with face model at position 0 -1 0, scale 1 1 1, 5s rotation
+[33mbed2f05[m Fix camera permissions and WebGL context issues
+[33m48aeb1a[m Production Ready: Switch to stable encantar.js v0.4.4
+[33mc9a18df[m AR Demo Milestone: Single face model with optimized positioning
+[33mec137a6[m Clean up AR demo: Remove Cryptobrick scene, keep only Rostro y Círculo model
+[33m567fb2b[m feat: Add second AR scene and optimize for mobile deployment

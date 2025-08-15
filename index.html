@@ -2,170 +2,196 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1, maximum-scale=1">
+    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1, maximum=1">
     <title>ARtedita 3D Viewer</title>
     <script src="https://encantar.dev/dist/encantar.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/aframe@1.6.0/dist/aframe-v1.6.0.min.js"></script>
     <script src="https://encantar.dev/dist/plugins/aframe-with-encantar.min.js"></script>
+
+    <!-- ① CAP DPR: limita el devicePixelRatio ANTES de que A-Frame cree el renderer -->
+    <script>
+      (function capDPR () {
+        const MAX_DPR = 1.5; // súbelo para más calidad (2.0) o bájalo para más FPS (1.0–1.25)
+        const current = window.devicePixelRatio || 1;
+        if (current > MAX_DPR) {
+          Object.defineProperty(window, 'devicePixelRatio', { get: () => MAX_DPR });
+        }
+      })();
+    </script>
+
     <style>
-        /* Reset and mobile-first approach */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
+        /* Reset */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         html, body {
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-            background-color: #000;
+            width: 100%; height: 100%;
+            overflow: hidden; background: #000;
             font-family: Arial, sans-serif;
-            position: fixed;
-            top: 0;
-            left: 0;
+            position: fixed; top: 0; left: 0;
+        }
+        @media (max-width: 768px) {
+            html, body { height: 100vh; height: -webkit-fill-available; }
         }
 
-        /* Mobile viewport meta fixes */
-        @media screen and (max-width: 768px) {
-            html, body {
-                height: 100vh;
-                height: -webkit-fill-available;
-            }
-        }
-
-        /* A-Frame scene full viewport - mobile optimized */
-        a-scene {
+        /* Fullscreen A-Frame/AR */
+        a-scene, ar-viewport, ar-hud {
             width: 100vw !important;
             height: 100vh !important;
             height: -webkit-fill-available !important;
             position: fixed !important;
-            top: 0 !important;
-            left: 0 !important;
-            z-index: 1 !important;
+            top: 0 !important; left: 0 !important;
         }
+        a-scene { z-index: 1 !important; }
 
-        /* AR viewport full screen - mobile optimized */
-        ar-viewport {
-            width: 100vw !important;
-            height: 100vh !important;
-            height: -webkit-fill-available !important;
+        /* Aim overlay (LEGO) */
+        #aim-overlay {
             position: fixed !important;
-            top: 0 !important;
-            left: 0 !important;
+            top: 50% !important; left: 50% !important;
+            transform: translate(-50%, -50%) !important;
+            width: 80vmin !important; height: auto !important;
+            z-index: 1001 !important; pointer-events: none !important;
+            transition: opacity .25s ease;
         }
-
-        /* HUD responsive styling - mobile optimized */
-        ar-hud {
-            width: 100vw !important;
-            height: 100vh !important;
-            height: -webkit-fill-available !important;
-            position: fixed !important;
-            top: 0 !important;
-            left: 0 !important;
-        }
-
-        #scan {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-            opacity: 0.75;
-        }
-
-        /* Scene info overlay - responsive */
-        /* Scene info overlay - mobile optimized */
-        #scene-info {
-            position: fixed !important;
-            top: 20px !important;
-            right: 20px !important;
-            background: rgba(0,0,0,0.9) !important;
-            color: white !important;
-            padding: 12px 16px !important;
-            border-radius: 12px !important;
-            font-family: Arial, sans-serif !important;
-            font-size: 14px !important;
-            border: 3px solid #4CAF50 !important;
-            z-index: 9999 !important;
-            max-width: 220px !important;
-            backdrop-filter: blur(10px) !important;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3) !important;
-        }
-
-        /* Mobile specific adjustments */
-        @media screen and (max-width: 768px) {
-            #scene-info {
-                font-size: 16px !important;
-                padding: 15px 20px !important;
-                top: calc(20px + env(safe-area-inset-top)) !important;
-                right: 20px !important;
-                max-width: 250px !important;
-                border-width: 4px !important;
-            }
-        }
-
-
-
-        /* Prevent zoom and scrolling on mobile - enhanced */
-        body {
-            touch-action: manipulation;
-            -webkit-user-select: none;
-            -moz-user-select: none;
-            -ms-user-select: none;
-            user-select: none;
-            -webkit-touch-callout: none;
-            -webkit-tap-highlight-color: transparent;
-            -webkit-text-size-adjust: 100%;
-            -ms-text-size-adjust: 100%;
-            overscroll-behavior: none;
-        }
-
-        /* Prevent pull-to-refresh and other mobile browser behaviors */
-        html {
-            overscroll-behavior: none;
-            -webkit-overflow-scrolling: touch;
-        }
-
-        /* Hide mobile browser UI elements */
-        @media screen and (max-width: 768px) {
-            body {
-                -webkit-appearance: none;
-                -moz-appearance: none;
-                appearance: none;
-            }
-        }
+        #aim-overlay svg { width: 100% !important; height: auto !important; }
+        #aim-overlay.hidden { opacity: 0; pointer-events: none; }
     </style>
 </head>
+<script>
+  // Oculta el overlay LEGO cuando Encantar reconoce el target y lo muestra al perder tracking
+  document.addEventListener('DOMContentLoaded', () => {
+    const scene = document.querySelector('a-scene');
+    const aimOverlay = document.getElementById('aim-overlay');
+    if (!scene || !aimOverlay) return;
+
+    // Animaciones del overlay (para pausarlas y ahorrar GPU)
+    const overlayAnims = aimOverlay.querySelectorAll('.stroke-main, .stroke-halo');
+    const pauseOverlay = () => overlayAnims.forEach(n => n.style.animationPlayState = 'paused');
+    const playOverlay  = () => overlayAnims.forEach(n => n.style.animationPlayState = 'running');
+
+    scene.addEventListener('artargetfound', (ev) => {
+      const ref = ev.detail && ev.detail.referenceImage;
+      if (!ref || ref.name === 'my-reference-image') {
+        aimOverlay.classList.add('hidden');  // usa tu CSS: opacity 0
+        pauseOverlay();
+      }
+    });
+
+    scene.addEventListener('artargetlost', (ev) => {
+      const ref = ev.detail && ev.detail.referenceImage;
+      if (!ref || ref.name === 'my-reference-image') {
+        aimOverlay.classList.remove('hidden');
+        playOverlay();
+      }
+    });
+  });
+</script>
 <body>
     <!-- A-Frame AR Scene -->
-    <a-scene encantar="stats: true; gizmos: true; powerPreference: high-performance" loading-screen="enabled: false">
+    <a-scene
+        encantar="stats: false; gizmos: false; powerPreference: high-performance"
+        loading-screen="enabled: false"
+        <!-- ② Renderer performance-first -->
+        renderer="antialias: false; precision: mediump; physicallyCorrectLights: false; alpha: false; sortObjects: true; logarithmicDepthBuffer: true"
+    >
 
-        <!-- Sources of data -->
+        <!-- Sources -->
         <ar-sources>
-            <ar-camera-source></ar-camera-source> <!-- webcam -->
+            <ar-camera-source></ar-camera-source>
         </ar-sources>
 
-        <!-- Trackers -->
+        <!-- Tracker -->
         <ar-trackers>
             <ar-image-tracker>
                 <ar-reference-image name="my-reference-image" src="custom-reference.png"></ar-reference-image>
             </ar-image-tracker>
         </ar-trackers>
 
-        <!-- AR Viewport -->
+        <!-- AR Viewport + HUD -->
         <ar-viewport>
             <ar-hud>
-                <img id="scan" src="scan.png" draggable="false" style="width: 100%; height: 100%; object-fit: contain; opacity: 0.75;">
+                <!-- LEGO head aim overlay (SUPER LIGHT ++ más notorio) -->
+                <div id="aim-overlay">
+                  <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                    <!-- Blur ligero del halo -->
+                    <defs>
+                      <filter id="haloLite" x="-30%" y="-30%" width="160%" height="160%">
+                        <feGaussianBlur in="SourceGraphic" stdDeviation="5" />
+                      </filter>
+                    </defs>
 
+                    <style>
+                      /* Contorno principal (sin filtros pesados) */
+                      .stroke-main {
+                        fill: none;
+                        stroke: #fff38a;           /* amarillo suave */
+                        stroke-width: 4.5;
+                        vector-effect: non-scaling-stroke;
+                        stroke-linejoin: round;
+                        stroke-linecap: round;
+                        animation: mainPulse 2.2s ease-in-out infinite;
+                      }
 
+                      /* HALO: más ancho, más opaco, sin animar grosor */
+                      .stroke-halo {
+                        fill: none;
+                        stroke: #fff955;           /* tono vivo base */
+                        stroke-width: 11;          /* antes 9 */
+                        opacity: .5;               /* antes .35 */
+                        vector-effect: non-scaling-stroke;
+                        stroke-linejoin: round;
+                        stroke-linecap: round;
+                        animation: haloPulse 2.2s ease-in-out infinite;
+                      }
+
+                      /* Relleno dorado translúcido de la figura */
+                      .fill-base { fill: rgba(255, 215, 0, 0.22); }
+
+                      /* Animaciones baratas (color/opacidad) */
+                      @keyframes mainPulse {
+                        0%   { stroke: #fff38a; }
+                        50%  { stroke: #ffff3d; }  /* pico */
+                        100% { stroke: #fff38a; }
+                      }
+                      @keyframes haloPulse {
+                        0%   { opacity: .4; stroke: #fff266; }
+                        50%  { opacity: .75; stroke: #ffff33; } /* pico más neón */
+                        100% { opacity: .4; stroke: #fff266; }
+                      }
+
+                      @media (prefers-reduced-motion: reduce) {
+                        .stroke-main, .stroke-halo { animation: none; }
+                      }
+                    </style>
+
+                    <!-- BASE (relleno) -->
+                    <g class="fill-base">
+                      <rect x="15" y="20" width="70" height="60" rx="18" ry="18"/>
+                      <rect x="38" y="10" width="24" height="12" rx="3" ry="3"/>
+                      <rect x="33" y="80" width="34" height="10" rx="3" ry="3"/>
+                    </g>
+
+                    <!-- HALO con blur ligero y animación de opacidad -->
+                    <g style="filter:url(#haloLite);">
+                      <rect class="stroke-halo" x="15" y="20" width="70" height="60" rx="18" ry="18"/>
+                      <rect class="stroke-halo" x="38" y="10" width="24" height="12" rx="3" ry="3"/>
+                      <rect class="stroke-halo" x="33" y="80" width="34" height="10" rx="3" ry="3"/>
+                    </g>
+
+                    <!-- CONTORNO PRINCIPAL -->
+                    <g>
+                      <rect class="stroke-main" x="15" y="20" width="70" height="60" rx="18" ry="18"/>
+                      <rect class="stroke-main" x="38" y="10" width="24" height="12" rx="3" ry="3"/>
+                      <rect class="stroke-main" x="33" y="80" width="34" height="10" rx="3" ry="3"/>
+                    </g>
+                  </svg>
+                </div>
             </ar-hud>
         </ar-viewport>
 
-        <!-- Virtual camera for AR -->
+        <!-- AR Camera -->
         <ar-camera></ar-camera>
 
-        <!-- MAIN AR SCENE - FACE MODEL -->
+        <!-- MAIN AR SCENE -->
         <ar-root id="main-scene" reference-image="my-reference-image" visible="true">
-            <!-- Face Model -->
             <a-gltf-model id="face-model"
                           src="base_basic_shaded.glb"
                           position="0 -1 0"
@@ -174,7 +200,6 @@
                           shadow="cast: true; receive: true">
             </a-gltf-model>
 
-            <!-- Professional lighting setup -->
             <a-light type="ambient" color="#ffffff" intensity="0.8"></a-light>
             <a-light type="directional" position="2 4 2" color="#ffffff" intensity="1.0" shadow="cast: true"></a-light>
             <a-light type="point" position="-1 2 1" color="#4CAF50" intensity="0.3"></a-light>
@@ -184,11 +209,8 @@
     </a-scene>
 
     <script>
-        // SINGLE SCENE AR DEMO - FACE MODEL
-
-        console.log('🎭 AR FACE MODEL LOADED!');
-        console.log('📷 Point your camera at the reference marker to see the 3D face model!');
-        console.log('🎨 Model will rotate automatically for a full 360° view!');
+      // Mantengo tu lógica de overlay si ya la tenías en otra versión; agrega aquí si la necesitas.
+      // (Opcional: puedes seguir usando artargetfound/lost para ocultar el overlay.)
     </script>
 </body>
 </html>
