@@ -4,9 +4,9 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1, maximum-scale=1">
     <title>encantar.js WebAR demo</title>
+    <script src="https://encantar.dev/dist/encantar.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/aframe@1.6.0/dist/aframe-v1.6.0.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/gh/alemart/encantar-js@v0.4.4/dist/encantar.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/gh/alemart/encantar-js@v0.4.4/dist/plugins/aframe-with-encantar.min.js"></script>
+    <script src="https://encantar.dev/dist/plugins/aframe-with-encantar.min.js"></script>
     <style>
         /* Reset and mobile-first approach */
         * {
@@ -153,7 +153,7 @@
 </head>
 <body>
     <!-- A-Frame AR Scene -->
-    <a-scene encantar="stats: true; gizmos: true; powerPreference: high-performance" loading-screen="enabled: false" vr-mode-ui="enabled: false">
+    <a-scene encantar="stats: true; gizmos: true; powerPreference: high-performance" loading-screen="enabled: false">
 
         <!-- Sources of data -->
         <ar-sources>
@@ -241,39 +241,9 @@
     <script>
         // SINGLE SCENE AR DEMO - FACE MODEL
 
-        // Request camera permissions explicitly
-        async function requestCameraPermission() {
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({ 
-                    video: { 
-                        facingMode: 'environment',
-                        width: { ideal: 1280 },
-                        height: { ideal: 720 }
-                    } 
-                });
-                console.log('📷 Camera permission granted!');
-                // Stop the test stream
-                stream.getTracks().forEach(track => track.stop());
-                return true;
-            } catch (error) {
-                console.error('❌ Camera permission denied:', error);
-                alert('Camera access is required for AR. Please allow camera permissions and refresh the page.');
-                return false;
-            }
-        }
-
-        // Initialize AR when page loads
-        document.addEventListener('DOMContentLoaded', async function() {
-            console.log('🎭 AR FACE MODEL LOADED!');
-            console.log('📷 Requesting camera permission...');
-            
-            const hasCamera = await requestCameraPermission();
-            if (hasCamera) {
-                console.log('✅ Camera ready for AR tracking!');
-                console.log('📷 Point your camera at the reference marker to see the 3D face model!');
-                console.log('🎨 Model will rotate automatically for a full 360° view!');
-            }
-        });
+        console.log('🎭 AR FACE MODEL LOADED!');
+        console.log('📷 Point your camera at the reference marker to see the 3D face model!');
+        console.log('🎨 Model will rotate automatically for a full 360° view!');
     </script>
 </body>
 </html>

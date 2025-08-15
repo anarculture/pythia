@@ -1,0 +1,10 @@
+[33mbed2f05[m[33m ([m[1;36mHEAD -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m)[m Fix camera permissions and WebGL context issues
+[33m48aeb1a[m Production Ready: Switch to stable encantar.js v0.4.4
+[33mc9a18df[m AR Demo Milestone: Single face model with optimized positioning
+[33mec137a6[m Clean up AR demo: Remove Cryptobrick scene, keep only Rostro y Círculo model
+[33m567fb2b[m feat: Add second AR scene and optimize for mobile deployment
+[33m08a171e[m Implement Cryptobrick dance animation and clean up repository
+[33mb0b3d7f[m Add interactive scene toggle functionality and enhanced UI
+[33m1c3efa8[m Complete encantar.js tutorial implementation: webcam AR with A-Frame 3D scene
+[33mfc9af4a[m Fix ES module imports and add Vec2 class integration
+[33m4ee4752[m Initial commit: Setup encantar2 project structure

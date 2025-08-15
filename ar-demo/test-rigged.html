@@ -1,0 +1,219 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1, maximum-scale=1">
+    <title>Rigged Model Test</title>
+    <script src="https://encantar.dev/dist/encantar.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/aframe@1.6.0/dist/aframe-v1.6.0.min.js"></script>
+    <script src="https://encantar.dev/dist/plugins/aframe-with-encantar.min.js"></script>
+    <style>
+        body { margin: 0; background: #000; font-family: Arial, sans-serif; }
+        a-scene { width: 100vw !important; height: 100vh !important; }
+        #controls {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            z-index: 1000;
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            margin: 2px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover { background: #45a049; }
+    </style>
+</head>
+<body>
+    <div id="controls">
+        <h3>Rigged Model Test</h3>
+        <button onclick="switchModel('base_basic_shaded.glb')">Original</button>
+        <button onclick="switchModel('base_basic_shaded_skeleton_only.glb')">Skeleton Only</button>
+        <button onclick="switchModel('base_basic_shaded_skeleton_and_skinning.glb')">Skeleton + Skin</button>
+        <br><br>
+        <button onclick="testAnimation('jaw')">Animate Jaw</button>
+        <button onclick="testAnimation('eyes')">Animate Eyes</button>
+        <button onclick="testAnimation('head')">Animate Head</button>
+        <br><br>
+        <div id="info">Current: Original Model</div>
+    </div>
+
+    <a-scene encantar="stats: true; gizmos: true; powerPreference: high-performance" loading-screen="enabled: false">
+        <ar-sources>
+            <ar-camera-source></ar-camera-source>
+        </ar-sources>
+
+        <ar-trackers>
+            <ar-image-tracker>
+                <ar-reference-image name="my-reference-image" src="custom-reference.png"></ar-reference-image>
+            </ar-image-tracker>
+        </ar-trackers>
+
+        <ar-viewport>
+            <ar-hud>
+                <img id="scan" src="scan.png" draggable="false" style="width: 100%; height: 100%; object-fit: contain; opacity: 0.75;">
+            </ar-hud>
+        </ar-viewport>
+
+        <ar-camera></ar-camera>
+
+        <ar-root id="main-scene" reference-image="my-reference-image" visible="true">
+            <a-gltf-model id="face-model"
+                          src="base_basic_shaded.glb"
+                          position="0 -1 0"
+                          scale="1 1 1"
+                          animation="property: rotation; to: 0 360 0; loop: true; dur: 5000"
+                          shadow="cast: true; receive: true"
+                          animation-mixer>
+            </a-gltf-model>
+
+            <a-light type="ambient" color="#ffffff" intensity="0.8"></a-light>
+            <a-light type="directional" position="2 4 2" color="#ffffff" intensity="1.0" shadow="cast: true"></a-light>
+            <a-light type="point" position="-1 2 1" color="#4CAF50" intensity="0.3"></a-light>
+            <a-light type="point" position="1 2 1" color="#2196F3" intensity="0.3"></a-light>
+        </ar-root>
+    </a-scene>
+
+    <script>
+        let currentModel = 'base_basic_shaded.glb';
+        let faceModelEl;
+
+        // Wait for scene to load
+        document.querySelector('a-scene').addEventListener('loaded', function () {
+            faceModelEl = document.getElementById('face-model');
+            console.log('Scene loaded, testing rigged models...');
+            
+            // Test if model has animations
+            faceModelEl.addEventListener('model-loaded', function () {
+                const model = this.getObject3D('mesh');
+                if (model) {
+                    console.log('Model loaded:', model);
+                    
+                    // Check for animations
+                    if (model.animations && model.animations.length > 0) {
+                        console.log('Found animations:', model.animations.length);
+                        model.animations.forEach((anim, i) => {
+                            console.log(`Animation ${i}:`, anim.name, 'Duration:', anim.duration);
+                        });
+                    } else {
+                        console.log('No animations found in model');
+                    }
+                    
+                    // Check for skeleton
+                    model.traverse(function(child) {
+                        if (child.isSkinnedMesh) {
+                            console.log('Found skinned mesh:', child.name);
+                            console.log('Skeleton bones:', child.skeleton.bones.length);
+                            child.skeleton.bones.forEach((bone, i) => {
+                                console.log(`Bone ${i}:`, bone.name);
+                            });
+                        }
+                    });
+                }
+            });
+        });
+
+        function switchModel(modelFile) {
+            if (faceModelEl) {
+                faceModelEl.setAttribute('src', modelFile);
+                currentModel = modelFile;
+                document.getElementById('info').textContent = `Current: ${modelFile}`;
+                console.log('Switched to:', modelFile);
+            }
+        }
+
+        function testAnimation(type) {
+            if (!faceModelEl) return;
+            
+            const model = faceModelEl.getObject3D('mesh');
+            if (!model) return;
+
+            console.log(`Testing ${type} animation...`);
+            
+            // Try to find and animate specific bones/morphs
+            model.traverse(function(child) {
+                if (child.isSkinnedMesh && child.skeleton) {
+                    const bones = child.skeleton.bones;
+                    
+                    switch(type) {
+                        case 'jaw':
+                            // Look for jaw bone
+                            const jawBone = bones.find(bone => 
+                                bone.name.toLowerCase().includes('jaw') || 
+                                bone.name.toLowerCase().includes('chin')
+                            );
+                            if (jawBone) {
+                                console.log('Animating jaw bone:', jawBone.name);
+                                animateBone(jawBone, 'rotation', 'x', -0.3, 1000);
+                            }
+                            break;
+                            
+                        case 'eyes':
+                            // Look for eye bones
+                            const eyeBones = bones.filter(bone => 
+                                bone.name.toLowerCase().includes('eye')
+                            );
+                            eyeBones.forEach(bone => {
+                                console.log('Animating eye bone:', bone.name);
+                                animateBone(bone, 'rotation', 'y', 0.2, 800);
+                            });
+                            break;
+                            
+                        case 'head':
+                            // Look for head bone
+                            const headBone = bones.find(bone => 
+                                bone.name.toLowerCase().includes('head')
+                            );
+                            if (headBone) {
+                                console.log('Animating head bone:', headBone.name);
+                                animateBone(headBone, 'rotation', 'z', 0.2, 1200);
+                            }
+                            break;
+                    }
+                }
+            });
+        }
+
+        function animateBone(bone, property, axis, amount, duration) {
+            const originalValue = bone[property][axis];
+            const targetValue = originalValue + amount;
+            
+            // Simple animation using requestAnimationFrame
+            let startTime = null;
+            
+            function animate(timestamp) {
+                if (!startTime) startTime = timestamp;
+                const progress = Math.min((timestamp - startTime) / duration, 1);
+                
+                // Ease in-out
+                const eased = progress < 0.5 ? 2 * progress * progress : 1 - Math.pow(-2 * progress + 2, 2) / 2;
+                
+                if (progress < 0.5) {
+                    bone[property][axis] = originalValue + (targetValue - originalValue) * eased;
+                } else {
+                    bone[property][axis] = targetValue - (targetValue - originalValue) * (eased - 0.5) * 2;
+                }
+                
+                if (progress < 1) {
+                    requestAnimationFrame(animate);
+                } else {
+                    bone[property][axis] = originalValue; // Reset to original
+                }
+            }
+            
+            requestAnimationFrame(animate);
+        }
+
+        console.log('Rigged model test ready!');
+        console.log('Use the buttons to switch between models and test animations');
+    </script>
+</body>
+</html>
