@@ -51,16 +51,36 @@
             z-index: 1001 !important; pointer-events: none !important;
             transition: opacity .25s ease;
         }
-        #aim-overlay svg { width: 100% !important; height: auto !important; }
+        #aim-overlay svg {
+            width: 100% !important;
+            height: auto !important;
+        }
+
+        /* Custom loader spin animation */
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
         #aim-overlay.hidden { opacity: 0; pointer-events: none; }
     </style>
 </head>
 <script>
-  // Oculta el overlay LEGO cuando Encantar reconoce el target y lo muestra al perder tracking
+  // Hide custom loader when AR is ready and manage LEGO overlay
   document.addEventListener('DOMContentLoaded', () => {
     const scene = document.querySelector('a-scene');
     const aimOverlay = document.getElementById('aim-overlay');
+    const customLoader = document.getElementById('custom-loader');
     if (!scene || !aimOverlay) return;
+
+    // Hide loader when AR session starts
+    scene.addEventListener('enter-vr', () => {
+      if (customLoader) customLoader.style.display = 'none';
+    });
+
+    // Also hide loader after a delay as fallback
+    setTimeout(() => {
+      if (customLoader) customLoader.style.display = 'none';
+    }, 3000);
 
     // Animaciones del overlay (para pausarlas y ahorrar GPU)
     const overlayAnims = aimOverlay.querySelectorAll('.stroke-main, .stroke-halo');
@@ -85,6 +105,54 @@
   });
 </script>
 <body>
+    <!-- Custom Loading Screen -->
+    <div id="custom-loader" style="
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: radial-gradient(circle at center, #0f172a, #020617);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: 'Segoe UI', sans-serif;
+        color: white;
+        z-index: 9999;
+    ">
+        <div style="
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 2rem;
+            border-radius: 20px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+            max-width: 300px;
+            width: 90%;
+            text-align: center;
+        ">
+            <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" style="
+                width: 100px;
+                height: 100px;
+                animation: spin 3s linear infinite;
+                margin-bottom: 1rem;
+                filter: drop-shadow(0 0 10px gold);
+            ">
+                <rect x="20" y="8" width="24" height="8" rx="2" fill="#FFD700" />
+                <rect x="12" y="16" width="40" height="32" rx="8" fill="#FFD700" />
+                <rect x="20" y="48" width="24" height="8" rx="2" fill="#FFD700" />
+                <rect x="12" y="16" width="40" height="32" rx="8" stroke="#FFEA00" stroke-width="2"/>
+            </svg>
+            <h2 style="
+                font-size: 1.5rem;
+                font-weight: 600;
+                letter-spacing: 0.5px;
+                margin: 0;
+            ">Cargando Experiencia</h2>
+        </div>
+    </div>
+
     <!-- A-Frame AR Scene -->
     <a-scene
         encantar="stats: false; gizmos: false; powerPreference: high-performance"
