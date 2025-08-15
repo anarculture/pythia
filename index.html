@@ -155,12 +155,6 @@
         <ar-viewport>
             <ar-hud>
                 <img id="scan" src="scan.png" draggable="false" style="width: 100%; height: 100%; object-fit: contain; opacity: 0.75;">
-                <!-- Dynamic info overlay -->
-                <div id="scene-info" style="position: fixed; top: 15px; right: 15px; background: rgba(0,0,0,0.9); color: white; padding: 12px; border-radius: 8px; font-family: Arial, sans-serif; font-size: 14px; border: 3px solid #4CAF50; box-shadow: 0 4px 8px rgba(0,0,0,0.6); z-index: 99999; max-width: 180px;">
-                    <div id="scene-title" style="font-weight: bold; color: #4CAF50;">🎭 ROSTRO Y CÍRCULO</div>
-                    <div style="margin: 4px 0; font-size: 12px; color: #CCC;">📷 Point camera at marker</div>
-                    <div id="scene-description" style="color: #FFD700; font-weight: bold;">🎨 ARTISTIC 3D MODEL!</div>
-                </div>
 
 
             </ar-hud>
@@ -169,35 +163,32 @@
         <!-- Virtual camera for AR -->
         <ar-camera></ar-camera>
 
-        <!-- ROSTRO Y CÍRCULO MODEL -->
-        <ar-root id="rostro-scene" reference-image="my-reference-image" visible="true">
-            <!-- Rostro y Círculo Model -->
-            <!-- Rostro y Círculo Model - positioned where the red cube was visible -->
-            <a-gltf-model id="rostro-circulo-model"
-                          src="rostro y circulo.glb"
-                          position="0 -0.5 0"
-                          scale="0.5 0.5 0.5"
-                          rotation="0 0 0"
-                          animation="property: rotation; to: 0 360 0; loop: true; dur: 8000"
+        <!-- MAIN AR SCENE - FACE MODEL -->
+        <ar-root id="main-scene" reference-image="my-reference-image" visible="true">
+            <!-- Face Model -->
+            <a-gltf-model id="face-model"
+                          src="base_basic_shaded.glb"
+                          position="0 -1 0"
+                          scale="1 1 1"
+                          animation="property: rotation; to: 0 360 0; loop: true; dur: 5000"
                           shadow="cast: true; receive: true">
             </a-gltf-model>
 
-            <!-- Artistic lighting for the face and circle -->
-            <a-light type="ambient" color="#ffffff" intensity="0.6"></a-light>
-            <a-light type="directional" position="2 4 3" color="#ffffff" intensity="0.8" shadow="cast: true"></a-light>
-            <a-light type="point" position="-1 2 1" color="#FF6B6B" intensity="0.4"></a-light>
-            <a-light type="point" position="1 2 1" color="#4ECDC4" intensity="0.4"></a-light>
-
-
+            <!-- Professional lighting setup -->
+            <a-light type="ambient" color="#ffffff" intensity="0.8"></a-light>
+            <a-light type="directional" position="2 4 2" color="#ffffff" intensity="1.0" shadow="cast: true"></a-light>
+            <a-light type="point" position="-1 2 1" color="#4CAF50" intensity="0.3"></a-light>
+            <a-light type="point" position="1 2 1" color="#2196F3" intensity="0.3"></a-light>
         </ar-root>
 
     </a-scene>
 
     <script>
-        // ROSTRO Y CÍRCULO AR DEMO
+        // SINGLE SCENE AR DEMO - FACE MODEL
 
-        console.log('🎭 ROSTRO Y CÍRCULO AR MODEL LOADED!');
-        console.log('📷 Point your camera at the reference image to see the 3D model!');
+        console.log('🎭 AR FACE MODEL LOADED!');
+        console.log('📷 Point your camera at the reference marker to see the 3D face model!');
+        console.log('🎨 Model will rotate automatically for a full 360° view!');
     </script>
 </body>
 </html>
