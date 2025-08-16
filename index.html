@@ -275,6 +275,38 @@
         </ar-root>
 
     </a-scene>
+
+<script>
+(function tuneCamera() {
+  // Reintenta hasta que el <video> tenga el stream
+  let tries = 0;
+  const tick = async () => {
+    tries++;
+    // Encantar usa internamente un <video>; buscamos uno visible
+    const vid = document.querySelector('ar-viewport video, video');
+    const track = vid && vid.srcObject && vid.srcObject.getVideoTracks && vid.srcObject.getVideoTracks()[0];
+    if (!track) { if (tries < 30) setTimeout(tick, 300); return; }
+
+    const caps = (track.getCapabilities && track.getCapabilities()) || {};
+    const adv = [];
+
+    // foco continuo / exposición / balance blancos (si el device lo soporta)
+    if (caps.focusMode && caps.focusMode.includes('continuous')) adv.push({ focusMode: 'continuous' });
+    if (caps.exposureMode && caps.exposureMode.includes('continuous')) adv.push({ exposureMode: 'continuous' });
+    if (caps.whiteBalanceMode && caps.whiteBalanceMode.includes('continuous')) adv.push({ whiteBalanceMode: 'continuous' });
+
+    // zoom suave inicial (2x o el máximo disponible si es menor)
+    if (caps.zoom) {
+      const z = Math.min(caps.zoom.max || 2, 2);
+      adv.push({ zoom: z });
+    }
+
+    try { await track.applyConstraints({ advanced: adv }); }
+    catch(e) { /* silencioso: algunos navegadores ignoran campos no soportados */ }
+  };
+  tick();
+})();
+</script>
 </body>
 </html>
 
