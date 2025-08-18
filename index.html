@@ -169,7 +169,7 @@
 <!-- TRACKER DE IMAGEN: igual a la cámara (nunca mayor) -->
 <ar-trackers>
   <ar-image-tracker resolution="lg">
-    <ar-reference-image name="my-reference-image" src="22ARnobg.png"></ar-reference-image>
+    <ar-reference-image name="my-reference-image" src="custom-reference.png"></ar-reference-image>
   </ar-image-tracker>
 </ar-trackers>
 
@@ -297,7 +297,7 @@
 
     // zoom suave inicial (2x o el máximo disponible si es menor)
     if (caps.zoom) {
-      const z = Math.min(caps.zoom.max || 2, 2);
+      const z = Math.min(caps.zoom.max || 2.5, 2.5);
       adv.push({ zoom: z });
     }
 
@@ -309,5 +309,3 @@
 </script>
 </body>
 </html>
-
-
