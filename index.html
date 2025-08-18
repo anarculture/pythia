@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1, maximum=1">
+    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1, maximum-scale=1">
     <title>ARtedita 3D Viewer</title>
     <!-- Local, version-pinned builds recommended for production -->
     <script src="encantar.js"></script>
@@ -25,7 +25,7 @@
         * { margin: 0; padding: 0; box-sizing: border-box; }
         html, body {
             width: 100%; height: 100%;
-            overflow: hidden; background: #000;
+            overflow: hidden; background: transparent;
             font-family: Arial, sans-serif;
             position: fixed; top: 0; left: 0;
         }
@@ -42,6 +42,12 @@
             top: 0 !important; left: 0 !important;
         }
         a-scene { z-index: 1 !important; }
+        
+        /* Ensure AR viewport is visible */
+        ar-viewport {
+            background: transparent !important;
+            z-index: 2 !important;
+        }
 
         /* Aim overlay (LEGO) */
         #aim-overlay {
@@ -79,10 +85,8 @@
       if (customLoader) customLoader.style.display = 'none';
     });
 
-    // Also hide loader after a delay as fallback
-    setTimeout(() => {
-      if (customLoader) customLoader.style.display = 'none';
-    }, 3000);
+    // Hide loader immediately for testing
+    if (customLoader) customLoader.style.display = 'none';
 
     // Animaciones del overlay (para pausarlas y ahorrar GPU)
     const overlayAnims = aimOverlay.querySelectorAll('.stroke-main, .stroke-halo');
@@ -157,28 +161,24 @@
     </div>
 
     <!-- A-Frame AR Scene -->
-    <a-scene
-        encantar="stats: false; gizmos: false; powerPreference: high-performance"
-        loading-screen="enabled: false"
-        renderer="antialias: false; precision: mediump; physicallyCorrectLights: false; alpha: false; sortObjects: true; logarithmicDepthBuffer: true"
-    >
+    <a-scene encantar="stats: false; gizmos: false">
 
-<!-- CAMERA: high quality, rear -->
-<ar-sources>
-  <ar-camera-source resolution="lg" facing-mode="environment"></ar-camera-source>
-</ar-sources>
+        <!-- Sources of data -->
+        <ar-sources>
+            <ar-camera-source resolution="lg" facing-mode="environment"></ar-camera-source>
+        </ar-sources>
 
-<!-- TRACKER: start md for faster lock; script will bump to lg after stable detect -->
-<ar-trackers>
-  <ar-image-tracker resolution="md">
-    <ar-reference-image name="my-reference-image" src="reference.png"></ar-reference-image>
-  </ar-image-tracker>
-</ar-trackers>
+        <!-- Trackers -->
+        <ar-trackers>
+            <ar-image-tracker>
+                <ar-reference-image name="my-reference-image" src="reference.png"></ar-reference-image>
+            </ar-image-tracker>
+        </ar-trackers>
 
-        <!-- AR Viewport + HUD -->
+        <!-- AR Viewport -->
         <ar-viewport>
             <ar-hud>
-                <!-- LEGO head aim overlay (SUPER LIGHT ++ más notorio) -->
+                <!-- LEGO head aim overlay -->
                 <div id="aim-overlay">
                   <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
                     <!-- Blur ligero del halo -->
@@ -253,12 +253,12 @@
                       <rect class="stroke-main" x="33" y="80" width="34" height="10" rx="3" ry="3"/>
                     </g>
                   </svg>
-                </div>
-            </ar-hud>
-        </ar-viewport>
+            </div>
+        </ar-hud>
+    </ar-viewport>
 
-        <!-- AR Camera -->
-        <ar-camera></ar-camera>
+    <!-- AR Camera -->
+    <ar-camera></ar-camera>
 
         <!-- MAIN AR SCENE (wrapped in smoothing container) -->
         <ar-root id="main-scene" reference-image="my-reference-image" visible="true">
@@ -272,10 +272,10 @@
                             shadow="cast: true; receive: true">
               </a-gltf-model>
 
-              <a-light type="ambient" color="#ffffff" intensity="0.8"></a-light>
-              <a-light type="directional" position="2 4 2" color="#ffffff" intensity="1.0" shadow="cast: true"></a-light>
-              <a-light type="point" position="-1 2 1" color="#4CAF50" intensity="0.3"></a-light>
-              <a-light type="point" position="1 2 1" color="#2196F3" intensity="0.3"></a-light>
+              <a-light type="ambient" color="#ffffff" intensity="2.51"></a-light>
+              <a-light type="directional" position="2 4 2" color="#ffffff" intensity="3.14" shadow="cast: true"></a-light>
+              <a-light type="point" position="-1 2 1" color="#4CAF50" intensity="30" decay="2"></a-light>
+              <a-light type="point" position="1 2 1" color="#2196F3" intensity="30" decay="2"></a-light>
             </a-entity>
         </ar-root>
 
