@@ -63,100 +63,431 @@
             height: auto !important;
         }
 
-        /* Custom loader spin animation */
+        /* Enhanced animations */
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.05); opacity: 0.8; }
+        }
+        
+        @keyframes progressPulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        
+        @keyframes slideInUp {
+            from { transform: translateY(30px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        
+        @keyframes fadeInScale {
+            from { transform: scale(0.9); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+        
         #aim-overlay.hidden { opacity: 0; pointer-events: none; }
+        
+        /* Enhanced aim overlay with better visibility */
+        #aim-overlay {
+            animation: fadeInScale 0.5s ease-out;
+        }
+        
+        /* Improved mobile touch targets */
+        @media (max-width: 768px) {
+            button, .touch-target {
+                min-height: 48px;
+                min-width: 48px;
+                padding: 12px 24px;
+            }
+        }
+        
+        /* Status indicator styles */
+        .status-indicator {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 25px;
+            font-size: 14px;
+            font-weight: 500;
+            z-index: 1000;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease;
+            animation: slideInUp 0.5s ease-out;
+        }
+        
+        .status-indicator.success {
+            background: rgba(76, 175, 80, 0.9);
+        }
+        
+        .status-indicator.warning {
+            background: rgba(255, 152, 0, 0.9);
+        }
+        
+        .status-indicator.error {
+            background: rgba(244, 67, 54, 0.9);
+        }
     </style>
 </head>
 
 <script>
-  // Hide custom loader when AR is ready and manage LEGO overlay
+  // Enhanced UX management with loading, onboarding, and status feedback
   document.addEventListener('DOMContentLoaded', () => {
     const scene = document.querySelector('a-scene');
     const aimOverlay = document.getElementById('aim-overlay');
     const customLoader = document.getElementById('custom-loader');
-    if (!scene || !aimOverlay) return;
-
-    // Hide loader when AR session starts
-    scene.addEventListener('enter-vr', () => {
-      if (customLoader) customLoader.style.display = 'none';
-    });
-
-    // Hide loader immediately for testing
-    if (customLoader) customLoader.style.display = 'none';
-
-    // Animaciones del overlay (para pausarlas y ahorrar GPU)
-    const overlayAnims = aimOverlay.querySelectorAll('.stroke-main, .stroke-halo');
-    const pauseOverlay = () => overlayAnims.forEach(n => n.style.animationPlayState = 'paused');
-    const playOverlay  = () => overlayAnims.forEach(n => n.style.animationPlayState = 'running');
-
-    scene.addEventListener('artargetfound', (ev) => {
-      const ref = ev.detail && ev.detail.referenceImage;
-      if (!ref || ref.name === 'my-reference-image') {
-        aimOverlay.classList.add('hidden');  // usa tu CSS: opacity 0
-        pauseOverlay();
+    const onboardingOverlay = document.getElementById('onboarding-overlay');
+    const startArBtn = document.getElementById('start-ar-btn');
+    const progressBar = document.getElementById('progress-bar');
+    
+    let loadingProgress = 0;
+    let isFirstTime = !localStorage.getItem('artedita-visited');
+    
+    // Enhanced loading sequence with progress
+    const updateProgress = (progress) => {
+      loadingProgress = Math.min(progress, 100);
+      if (progressBar) {
+        progressBar.style.width = loadingProgress + '%';
       }
-    });
-
-    scene.addEventListener('artargetlost', (ev) => {
-      const ref = ev.detail && ev.detail.referenceImage;
-      if (!ref || ref.name === 'my-reference-image') {
-        aimOverlay.classList.remove('hidden');
-        playOverlay();
+    };
+    
+    // Simulate loading progress
+    const loadingSteps = [
+      { progress: 20, delay: 300, text: 'Cargando AR...' },
+      { progress: 50, delay: 600, text: 'Iniciando cámara...' },
+      { progress: 80, delay: 900, text: 'Preparando experiencia...' },
+      { progress: 100, delay: 1200, text: 'Listo!' }
+    ];
+    
+    let stepIndex = 0;
+    const processLoadingStep = () => {
+      if (stepIndex < loadingSteps.length) {
+        const step = loadingSteps[stepIndex];
+        updateProgress(step.progress);
+        
+        // Update loading text
+        const loadingText = customLoader?.querySelector('p');
+        if (loadingText) loadingText.textContent = step.text;
+        
+        stepIndex++;
+        setTimeout(processLoadingStep, step.delay);
+      } else {
+        // Loading complete
+        setTimeout(() => {
+          if (customLoader) {
+            customLoader.style.opacity = '0';
+            setTimeout(() => {
+              customLoader.style.display = 'none';
+              if (isFirstTime) {
+                showOnboarding();
+              }
+            }, 500);
+          }
+        }, 300);
       }
-    });
+    };
+    
+    // Start loading sequence
+    setTimeout(processLoadingStep, 500);
+    
+    // Onboarding management
+    const showOnboarding = () => {
+      if (onboardingOverlay) {
+        onboardingOverlay.style.display = 'flex';
+        onboardingOverlay.style.animation = 'fadeInScale 0.5s ease-out';
+      }
+    };
+    
+    const hideOnboarding = () => {
+      if (onboardingOverlay) {
+        onboardingOverlay.style.opacity = '0';
+        setTimeout(() => {
+          onboardingOverlay.style.display = 'none';
+          localStorage.setItem('artedita-visited', 'true');
+        }, 300);
+      }
+    };
+    
+    // Start AR button handler
+    if (startArBtn) {
+      startArBtn.addEventListener('click', hideOnboarding);
+      startArBtn.addEventListener('touchend', hideOnboarding);
+    }
+    
+    // Status indicator system
+    const showStatus = (message, type = 'info', duration = 3000) => {
+      // Remove existing status indicators
+      document.querySelectorAll('.status-indicator').forEach(el => el.remove());
+      
+      const indicator = document.createElement('div');
+      indicator.className = `status-indicator ${type}`;
+      indicator.textContent = message;
+      document.body.appendChild(indicator);
+      
+      setTimeout(() => {
+        indicator.style.opacity = '0';
+        indicator.style.transform = 'translateX(-50%) translateY(-20px)';
+        setTimeout(() => indicator.remove(), 300);
+      }, duration);
+    };
+    
+    // Enhanced AR event handling
+    if (scene && aimOverlay) {
+      // Overlay animations management
+      const overlayAnims = aimOverlay.querySelectorAll('.stroke-main, .stroke-halo');
+      const pauseOverlay = () => overlayAnims.forEach(n => n.style.animationPlayState = 'paused');
+      const playOverlay = () => overlayAnims.forEach(n => n.style.animationPlayState = 'running');
+      
+      // AR session events
+      scene.addEventListener('enter-vr', () => {
+        showStatus('Sesión AR iniciada', 'success');
+      });
+      
+      // Target tracking events with enhanced feedback
+      scene.addEventListener('artargetfound', (ev) => {
+        const ref = ev.detail && ev.detail.referenceImage;
+        if (!ref || ref.name === 'my-reference-image') {
+          aimOverlay.classList.add('hidden');
+          pauseOverlay();
+          showStatus('¡Objetivo encontrado!', 'success', 2000);
+        }
+      });
+      
+      scene.addEventListener('artargetlost', (ev) => {
+        const ref = ev.detail && ev.detail.referenceImage;
+        if (!ref || ref.name === 'my-reference-image') {
+          aimOverlay.classList.remove('hidden');
+          playOverlay();
+          showStatus('Buscando objetivo...', 'warning', 2000);
+        }
+      });
+      
+      // Error handling
+      scene.addEventListener('ar-error', (ev) => {
+        showStatus('Error AR: ' + (ev.detail?.message || 'Error desconocido'), 'error', 5000);
+      });
+      
+      // Camera permission handling
+      navigator.mediaDevices?.getUserMedia({ video: true })
+        .then(() => {
+          showStatus('Cámara lista', 'success', 2000);
+        })
+        .catch(() => {
+          showStatus('Permiso de cámara requerido', 'error', 5000);
+        });
+    }
+    
+    // Performance monitoring
+    let frameCount = 0;
+    let lastTime = performance.now();
+    
+    const monitorPerformance = () => {
+      frameCount++;
+      const currentTime = performance.now();
+      
+      if (currentTime - lastTime >= 5000) { // Check every 5 seconds
+        const fps = Math.round((frameCount * 1000) / (currentTime - lastTime));
+        
+        if (fps < 20) {
+          showStatus('Rendimiento bajo detectado', 'warning', 3000);
+        }
+        
+        frameCount = 0;
+        lastTime = currentTime;
+      }
+      
+      requestAnimationFrame(monitorPerformance);
+    };
+    
+    // Start performance monitoring
+    requestAnimationFrame(monitorPerformance);
   });
 </script>
 
 <body>
-    <!-- Custom Loading Screen -->
+    <!-- Enhanced Loading Screen -->
     <div id="custom-loader" style="
         position: fixed;
         top: 0;
         left: 0;
         width: 100vw;
         height: 100vh;
-        background: radial-gradient(circle at center, #0f172a, #020617);
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         display: flex;
         align-items: center;
         justify-content: center;
-        font-family: 'Segoe UI', sans-serif;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         color: white;
         z-index: 9999;
+        transition: opacity 0.5s ease-out;
     ">
         <div style="
             display: flex;
             flex-direction: column;
             align-items: center;
-            background: rgba(255, 255, 255, 0.05);
-            padding: 2rem;
-            border-radius: 20px;
-            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
-            max-width: 300px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 3rem 2rem;
+            border-radius: 24px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            max-width: 350px;
             width: 90%;
             text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.2);
         ">
-            <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" style="
-                width: 100px;
-                height: 100px;
-                animation: spin 3s linear infinite;
-                margin-bottom: 1rem;
-                filter: drop-shadow(0 0 10px gold);
+            <!-- Modern AR Icon -->
+            <div style="
+                width: 120px;
+                height: 120px;
+                margin-bottom: 2rem;
+                position: relative;
+                display: flex;
+                align-items: center;
+                justify-content: center;
             ">
-                <rect x="20" y="8" width="24" height="8" rx="2" fill="#FFD700" />
-                <rect x="12" y="16" width="40" height="32" rx="8" fill="#FFD700" />
-                <rect x="20" y="48" width="24" height="8" rx="2" fill="#FFD700" />
-                <rect x="12" y="16" width="40" height="32" rx="8" stroke="#FFEA00" stroke-width="2"/>
-            </svg>
+                <svg viewBox="0 0 100 100" style="
+                    width: 100%;
+                    height: 100%;
+                    animation: pulse 2s ease-in-out infinite;
+                ">
+                    <defs>
+                        <linearGradient id="arGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" style="stop-color:#FFD700;stop-opacity:1" />
+                            <stop offset="100%" style="stop-color:#FFA500;stop-opacity:1" />
+                        </linearGradient>
+                    </defs>
+                    <!-- AR Cube -->
+                    <rect x="25" y="25" width="50" height="50" rx="8" fill="url(#arGradient)" opacity="0.8"/>
+                    <rect x="25" y="25" width="50" height="50" rx="8" fill="none" stroke="#fff" stroke-width="2"/>
+                    <!-- AR Points -->
+                    <circle cx="15" cy="15" r="3" fill="#fff" opacity="0.9"/>
+                    <circle cx="85" cy="15" r="3" fill="#fff" opacity="0.9"/>
+                    <circle cx="15" cy="85" r="3" fill="#fff" opacity="0.9"/>
+                    <circle cx="85" cy="85" r="3" fill="#fff" opacity="0.9"/>
+                    <!-- Connecting lines -->
+                    <line x1="18" y1="15" x2="25" y2="25" stroke="#fff" stroke-width="1" opacity="0.6"/>
+                    <line x1="82" y1="15" x2="75" y2="25" stroke="#fff" stroke-width="1" opacity="0.6"/>
+                    <line x1="18" y1="85" x2="25" y2="75" stroke="#fff" stroke-width="1" opacity="0.6"/>
+                    <line x1="82" y1="85" x2="75" y2="75" stroke="#fff" stroke-width="1" opacity="0.6"/>
+                </svg>
+            </div>
+            
             <h2 style="
+                font-size: 1.8rem;
+                font-weight: 700;
+                letter-spacing: 0.5px;
+                margin: 0 0 0.5rem 0;
+                background: linear-gradient(45deg, #FFD700, #FFA500);
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+                background-clip: text;
+            ">ARtedita</h2>
+            
+            <p style="
+                font-size: 1rem;
+                opacity: 0.9;
+                margin: 0 0 1.5rem 0;
+                font-weight: 300;
+            ">Iniciando experiencia AR...</p>
+            
+            <!-- Progress Bar -->
+            <div style="
+                width: 100%;
+                height: 4px;
+                background: rgba(255, 255, 255, 0.2);
+                border-radius: 2px;
+                overflow: hidden;
+            ">
+                <div id="progress-bar" style="
+                    width: 0%;
+                    height: 100%;
+                    background: linear-gradient(90deg, #FFD700, #FFA500);
+                    border-radius: 2px;
+                    transition: width 0.3s ease;
+                    animation: progressPulse 1.5s ease-in-out infinite;
+                "></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Onboarding Overlay -->
+    <div id="onboarding-overlay" style="
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: rgba(0, 0, 0, 0.8);
+        backdrop-filter: blur(5px);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        color: white;
+        z-index: 8888;
+        padding: 2rem;
+    ">
+        <div style="
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 2.5rem;
+            border-radius: 20px;
+            max-width: 400px;
+            width: 100%;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        ">
+            <div style="
+                width: 80px;
+                height: 80px;
+                margin: 0 auto 1.5rem;
+                background: linear-gradient(45deg, #FFD700, #FFA500);
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            ">
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="white">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                </svg>
+            </div>
+            <h3 style="
                 font-size: 1.5rem;
                 font-weight: 600;
-                letter-spacing: 0.5px;
-                margin: 0;
-            ">Cargando Experiencia</h2>
+                margin: 0 0 1rem 0;
+            ">¡Bienvenido a ARtedita!</h3>
+            <p style="
+                font-size: 1rem;
+                line-height: 1.5;
+                margin: 0 0 2rem 0;
+                opacity: 0.9;
+            ">Apunta tu cámara hacia la imagen de referencia para ver el modelo 3D en realidad aumentada.</p>
+            <button id="start-ar-btn" style="
+                background: linear-gradient(45deg, #FFD700, #FFA500);
+                color: #000;
+                border: none;
+                padding: 1rem 2rem;
+                border-radius: 50px;
+                font-size: 1.1rem;
+                font-weight: 600;
+                cursor: pointer;
+                transition: all 0.3s ease;
+                box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);
+                min-width: 160px;
+            " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(255, 215, 0, 0.4)'"
+               onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 15px rgba(255, 215, 0, 0.3)'"
+               ontouchstart="this.style.transform='translateY(-2px)'"
+               ontouchend="this.style.transform='translateY(0)'">
+                Comenzar
+            </button>
         </div>
     </div>
 
