@@ -4,6 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1, maximum=1">
     <title>ARtedita 3D Viewer</title>
+    <!-- Local, version-pinned builds recommended for production -->
     <script src="encantar.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/aframe@1.6.0/dist/aframe-v1.6.0.min.js"></script>
     <script src="aframe-with-encantar.js"></script>
@@ -64,6 +65,7 @@
         #aim-overlay.hidden { opacity: 0; pointer-events: none; }
     </style>
 </head>
+
 <script>
   // Hide custom loader when AR is ready and manage LEGO overlay
   document.addEventListener('DOMContentLoaded', () => {
@@ -104,6 +106,7 @@
     });
   });
 </script>
+
 <body>
     <!-- Custom Loading Screen -->
     <div id="custom-loader" style="
@@ -157,19 +160,18 @@
     <a-scene
         encantar="stats: false; gizmos: false; powerPreference: high-performance"
         loading-screen="enabled: false"
-        <!-- ② Renderer performance-first -->
         renderer="antialias: false; precision: mediump; physicallyCorrectLights: false; alpha: false; sortObjects: true; logarithmicDepthBuffer: true"
     >
 
-<!-- FUENTE DE CÁMARA: máxima razonable -->
+<!-- CAMERA: high quality, rear -->
 <ar-sources>
   <ar-camera-source resolution="lg" facing-mode="environment"></ar-camera-source>
 </ar-sources>
 
-<!-- TRACKER DE IMAGEN: igual a la cámara (nunca mayor) -->
+<!-- TRACKER: start md for faster lock; script will bump to lg after stable detect -->
 <ar-trackers>
-  <ar-image-tracker resolution="lg">
-    <ar-reference-image name="my-reference-image" src="custom-reference.png"></ar-reference-image>
+  <ar-image-tracker resolution="md">
+    <ar-reference-image name="my-reference-image" src="reference.png"></ar-reference-image>
   </ar-image-tracker>
 </ar-trackers>
 
@@ -187,10 +189,10 @@
                     </defs>
 
                     <style>
-                      /* Contorno principal (sin filtros pesados) */
+                      /* Contorno principal (sin filtros pesados) -->
                       .stroke-main {
                         fill: none;
-                        stroke: #fff38a;           /* amarillo suave */
+                        stroke: #fff38a;           /* amarillo suave -->
                         stroke-width: 4.5;
                         vector-effect: non-scaling-stroke;
                         stroke-linejoin: round;
@@ -198,30 +200,30 @@
                         animation: mainPulse 2.2s ease-in-out infinite;
                       }
 
-                      /* HALO: más ancho, más opaco, sin animar grosor */
+                      /* HALO: más ancho, más opaco, sin animar grosor -->
                       .stroke-halo {
                         fill: none;
-                        stroke: #fff955;           /* tono vivo base */
-                        stroke-width: 11;          /* antes 9 */
-                        opacity: .5;               /* antes .35 */
+                        stroke: #fff955;           /* tono vivo base -->
+                        stroke-width: 11;          /* antes 9 -->
+                        opacity: .5;               /* antes .35 -->
                         vector-effect: non-scaling-stroke;
                         stroke-linejoin: round;
                         stroke-linecap: round;
                         animation: haloPulse 2.2s ease-in-out infinite;
                       }
 
-                      /* Relleno dorado translúcido de la figura */
+                      /* Relleno dorado translúcido de la figura -->
                       .fill-base { fill: rgba(255, 215, 0, 0.22); }
 
-                      /* Animaciones baratas (color/opacidad) */
+                      /* Animaciones baratas (color/opacidad) -->
                       @keyframes mainPulse {
                         0%   { stroke: #fff38a; }
-                        50%  { stroke: #ffff3d; }  /* pico */
+                        50%  { stroke: #ffff3d; }  /* pico -->
                         100% { stroke: #fff38a; }
                       }
                       @keyframes haloPulse {
                         0%   { opacity: .4; stroke: #fff266; }
-                        50%  { opacity: .75; stroke: #ffff33; } /* pico más neón */
+                        50%  { opacity: .75; stroke: #ffff33; } /* pico más neón -->
                         100% { opacity: .4; stroke: #fff266; }
                       }
 
@@ -258,24 +260,77 @@
         <!-- AR Camera -->
         <ar-camera></ar-camera>
 
-        <!-- MAIN AR SCENE -->
+        <!-- MAIN AR SCENE (wrapped in smoothing container) -->
         <ar-root id="main-scene" reference-image="my-reference-image" visible="true">
-            <a-gltf-model id="face-model"
-                          src="base_basic_shaded.glb"
-                          position="0 -1 0"
-                          scale="1 1 1"
-                          animation="property: rotation; to: 0 360 0; loop: true; dur: 5000"
-                          shadow="cast: true; receive: true">
-            </a-gltf-model>
+            <!-- Smoothed container for stability -->
+            <a-entity id="smoothed" smooth-pose="pos:0.18; rot:0.18; scale:0.22">
+              <a-gltf-model id="face-model"
+                            src="base_basic_shaded.glb"
+                            position="0 -1 0"
+                            scale="1 1 1"
+                            animation="property: rotation; to: 0 360 0; loop: true; dur: 5000"
+                            shadow="cast: true; receive: true">
+              </a-gltf-model>
 
-            <a-light type="ambient" color="#ffffff" intensity="0.8"></a-light>
-            <a-light type="directional" position="2 4 2" color="#ffffff" intensity="1.0" shadow="cast: true"></a-light>
-            <a-light type="point" position="-1 2 1" color="#4CAF50" intensity="0.3"></a-light>
-            <a-light type="point" position="1 2 1" color="#2196F3" intensity="0.3"></a-light>
+              <a-light type="ambient" color="#ffffff" intensity="0.8"></a-light>
+              <a-light type="directional" position="2 4 2" color="#ffffff" intensity="1.0" shadow="cast: true"></a-light>
+              <a-light type="point" position="-1 2 1" color="#4CAF50" intensity="0.3"></a-light>
+              <a-light type="point" position="1 2 1" color="#2196F3" intensity="0.3"></a-light>
+            </a-entity>
         </ar-root>
 
     </a-scene>
 
+<!-- Pose smoothing component -->
+<script>
+AFRAME.registerComponent('smooth-pose', {
+  schema: { pos:{default:0.18}, rot:{default:0.18}, scale:{default:0.22} },
+  init(){ this.p=new THREE.Vector3(); this.q=new THREE.Quaternion(); this.s=new THREE.Vector3(); },
+  tick(){
+    const child = this.el.object3D;
+    const parent = this.el.parentEl && this.el.parentEl.object3D;
+    if (!parent) return;
+
+    parent.getWorldPosition(this.p);
+    parent.getWorldQuaternion(this.q);
+    parent.getWorldScale(this.s);
+
+    child.position.lerp(this.p, this.data.pos);
+    child.quaternion.slerp(this.q, this.data.rot);
+    child.scale.lerp(this.s, this.data.scale);
+    child.updateMatrixWorld();
+  }
+});
+</script>
+
+<!-- Adaptive tracker: fast acquisition (md) → stable (lg) after 1s -->
+<script>
+(function adaptiveTrackerRes(){
+  const tracker = document.querySelector('ar-image-tracker');
+  const cam = document.querySelector('ar-camera-source');
+  if (!tracker || !cam) return;
+
+  // Ensure camera is high; start tracker easier to acquire
+  cam.setAttribute('resolution', 'lg');
+  tracker.setAttribute('resolution', 'md');
+
+  let timer = 0;
+  document.addEventListener('artargetfound', (ev)=>{
+    const ref = ev.detail && ev.detail.referenceImage;
+    if (ref && ref.name !== 'my-reference-image') return;
+    clearTimeout(timer);
+    timer = setTimeout(()=> tracker.setAttribute('resolution','lg'), 1000);
+  });
+  document.addEventListener('artargetlost', (ev)=>{
+    const ref = ev.detail && ev.detail.referenceImage;
+    if (ref && ref.name !== 'my-reference-image') return;
+    clearTimeout(timer);
+    tracker.setAttribute('resolution','md'); // easier relock if lost
+  });
+})();
+</script>
+
+<!-- Camera focus/zoom for small marker recognition -->
 <script>
 (function tuneCamera() {
   // Reintenta hasta que el <video> tenga el stream
@@ -295,7 +350,7 @@
     if (caps.exposureMode && caps.exposureMode.includes('continuous')) adv.push({ exposureMode: 'continuous' });
     if (caps.whiteBalanceMode && caps.whiteBalanceMode.includes('continuous')) adv.push({ whiteBalanceMode: 'continuous' });
 
-    // zoom suave inicial (2x o el máximo disponible si es menor)
+    // zoom suave inicial (hasta 2.5x si se permite)
     if (caps.zoom) {
       const z = Math.min(caps.zoom.max || 2.5, 2.5);
       adv.push({ zoom: z });
