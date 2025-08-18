@@ -180,79 +180,68 @@
             <ar-hud>
                 <!-- LEGO head aim overlay -->
                 <div id="aim-overlay">
-                  <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-                    <!-- Blur ligero del halo -->
-                    <defs>
-                      <filter id="haloLite" x="-30%" y="-30%" width="160%" height="160%">
-                        <feGaussianBlur in="SourceGraphic" stdDeviation="5" />
-                      </filter>
-                    </defs>
+  <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" style="background:none">
+    <defs>
+      <filter id="haloLite" x="-30%" y="-30%" width="160%" height="160%">
+        <feGaussianBlur in="SourceGraphic" stdDeviation="5" />
+      </filter>
+    </defs>
 
-                    <style>
-                      /* Contorno principal (sin filtros pesados) -->
-                      .stroke-main {
-                        fill: none;
-                        stroke: #fff38a;           /* amarillo suave -->
-                        stroke-width: 4.5;
-                        vector-effect: non-scaling-stroke;
-                        stroke-linejoin: round;
-                        stroke-linecap: round;
-                        animation: mainPulse 2.2s ease-in-out infinite;
-                      }
+    <style>
+      .stroke-main {
+        /* animation + styling still via CSS */
+        stroke: #fff38a;
+        stroke-width: 4.5;
+        vector-effect: non-scaling-stroke;
+        stroke-linejoin: round;
+        stroke-linecap: round;
+        animation: mainPulse 2.2s ease-in-out infinite;
+      }
+      .stroke-halo {
+        stroke: #fff955;
+        stroke-width: 11;
+        opacity: .5;
+        vector-effect: non-scaling-stroke;
+        stroke-linejoin: round;
+        stroke-linecap: round;
+        animation: haloPulse 2.2s ease-in-out infinite;
+      }
+      @keyframes mainPulse {
+        0% { stroke: #fff38a; }
+        50% { stroke: #ffff3d; }
+        100% { stroke: #fff38a; }
+      }
+      @keyframes haloPulse {
+        0% { opacity: .4; stroke: #fff266; }
+        50% { opacity: .75; stroke: #ffff33; }
+        100% { opacity: .4; stroke: #fff266; }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .stroke-main, .stroke-halo { animation: none; }
+      }
+    </style>
 
-                      /* HALO: más ancho, más opaco, sin animar grosor -->
-                      .stroke-halo {
-                        fill: none;
-                        stroke: #fff955;           /* tono vivo base -->
-                        stroke-width: 11;          /* antes 9 -->
-                        opacity: .5;               /* antes .35 -->
-                        vector-effect: non-scaling-stroke;
-                        stroke-linejoin: round;
-                        stroke-linecap: round;
-                        animation: haloPulse 2.2s ease-in-out infinite;
-                      }
+    <!-- BASE (use explicit fill + opacity so it never turns black) -->
+    <g fill="#FFD700" fill-opacity="0.22">
+      <rect x="15" y="20" width="70" height="60" rx="18" ry="18"/>
+      <rect x="38" y="10" width="24" height="12" rx="3" ry="3"/>
+      <rect x="33" y="80" width="34" height="10" rx="3" ry="3"/>
+    </g>
 
-                      /* Relleno dorado translúcido de la figura -->
-                      .fill-base { fill: rgba(255, 215, 0, 0.22); }
+    <!-- HALO: force no fill via attribute -->
+    <g style="filter:url(#haloLite);">
+      <rect class="stroke-halo" x="15" y="20" width="70" height="60" rx="18" ry="18" fill="none"/>
+      <rect class="stroke-halo" x="38" y="10" width="24" height="12" rx="3" ry="3" fill="none"/>
+      <rect class="stroke-halo" x="33" y="80" width="34" height="10" rx="3" ry="3" fill="none"/>
+    </g>
 
-                      /* Animaciones baratas (color/opacidad) -->
-                      @keyframes mainPulse {
-                        0%   { stroke: #fff38a; }
-                        50%  { stroke: #ffff3d; }  /* pico -->
-                        100% { stroke: #fff38a; }
-                      }
-                      @keyframes haloPulse {
-                        0%   { opacity: .4; stroke: #fff266; }
-                        50%  { opacity: .75; stroke: #ffff33; } /* pico más neón -->
-                        100% { opacity: .4; stroke: #fff266; }
-                      }
-
-                      @media (prefers-reduced-motion: reduce) {
-                        .stroke-main, .stroke-halo { animation: none; }
-                      }
-                    </style>
-
-                    <!-- BASE (relleno) -->
-                    <g class="fill-base">
-                      <rect x="15" y="20" width="70" height="60" rx="18" ry="18"/>
-                      <rect x="38" y="10" width="24" height="12" rx="3" ry="3"/>
-                      <rect x="33" y="80" width="34" height="10" rx="3" ry="3"/>
-                    </g>
-
-                    <!-- HALO con blur ligero y animación de opacidad -->
-                    <g style="filter:url(#haloLite);">
-                      <rect class="stroke-halo" x="15" y="20" width="70" height="60" rx="18" ry="18"/>
-                      <rect class="stroke-halo" x="38" y="10" width="24" height="12" rx="3" ry="3"/>
-                      <rect class="stroke-halo" x="33" y="80" width="34" height="10" rx="3" ry="3"/>
-                    </g>
-
-                    <!-- CONTORNO PRINCIPAL -->
-                    <g>
-                      <rect class="stroke-main" x="15" y="20" width="70" height="60" rx="18" ry="18"/>
-                      <rect class="stroke-main" x="38" y="10" width="24" height="12" rx="3" ry="3"/>
-                      <rect class="stroke-main" x="33" y="80" width="34" height="10" rx="3" ry="3"/>
-                    </g>
-                  </svg>
+    <!-- OUTLINE: force no fill via attribute -->
+    <g>
+      <rect class="stroke-main" x="15" y="20" width="70" height="60" rx="18" ry="18" fill="none"/>
+      <rect class="stroke-main" x="38" y="10" width="24" height="12" rx="3" ry="3" fill="none"/>
+      <rect class="stroke-main" x="33" y="80" width="34" height="10" rx="3" ry="3" fill="none"/>
+    </g>
+  </svg>
             </div>
         </ar-hud>
     </ar-viewport>
