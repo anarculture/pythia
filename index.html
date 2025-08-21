@@ -42,11 +42,96 @@
             top: 0 !important; left: 0 !important;
         }
         a-scene { z-index: 1 !important; }
+        ar-hud { z-index: 1000 !important; }
         
         /* Ensure AR viewport is visible */
         ar-viewport {
             background: transparent !important;
             z-index: 2 !important;
+        }
+
+        /* Progress Ring for Tracking Confidence */
+        #progress-ring {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 120px;
+            height: 120px;
+            z-index: 99999;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        #progress-ring.visible {
+            opacity: 1;
+        }
+        
+        .progress-circle {
+            width: 100%;
+            height: 100%;
+            transform: rotate(-90deg);
+        }
+        
+        .progress-track {
+            fill: none;
+            stroke: rgba(255, 255, 255, 0.1);
+            stroke-width: 3;
+        }
+        
+        .progress-fill {
+            fill: none;
+            stroke: #FFD700;
+            stroke-width: 8;
+            stroke-linecap: round;
+            stroke-dasharray: 314.16; /* 2 * π * 50 */
+            stroke-dashoffset: 0;
+            transition: stroke-dashoffset 0.2s ease, stroke 0.2s ease;
+            filter: drop-shadow(0 0 12px rgba(255, 215, 0, 1));
+        }
+        
+        .progress-fill.high-confidence {
+            stroke: #4CAF50;
+            filter: drop-shadow(0 0 8px rgba(76, 175, 80, 0.8));
+        }
+
+        /* Distance Feedback */
+        #distance-feedback {
+            position: fixed;
+            bottom: 20%;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 99998;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            font-size: 18px;
+            font-weight: bold;
+            color: #FFFFFF;
+            text-shadow: 0 2px 8px rgba(0, 0, 0, 0.8);
+            background: rgba(0, 0, 0, 0.5);
+            padding: 8px 16px;
+            border-radius: 20px;
+        }
+        
+        #distance-feedback.visible {
+            opacity: 1;
+        }
+        
+        #distance-feedback.too-close {
+            background: rgba(255, 0, 0, 0.7);
+            color: #FFFFFF;
+        }
+        
+        #distance-feedback.too-far {
+            background: rgba(255, 255, 0, 0.7);
+            color: #000000;
+        }
+        
+        #distance-feedback.optimal {
+            background: rgba(0, 255, 0, 0.7);
+            color: #000000;
         }
 
         /* Aim overlay (LEGO) */
@@ -75,8 +160,13 @@
         }
         
         @keyframes progressPulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.7; }
+            0%, 100% { opacity: 0.8; }
+            50% { opacity: 1; }
+        }
+        
+        @keyframes scanPulse {
+            0%, 100% { transform: scale(1); opacity: 0.8; }
+            50% { transform: scale(1.1); opacity: 1; }
         }
         
         @keyframes slideInUp {
@@ -179,24 +269,70 @@
         
         stepIndex++;
         setTimeout(processLoadingStep, step.delay);
-      } else {
-        // Loading complete
+      }
+    }
+    
+    // Track AR system readiness
+    let arSystemReady = false;
+    let cameraReady = false;
+    
+    // Much simpler: Just use a timer after loading steps complete
+    console.log('Starting AR initialization timer...');
+    setTimeout(() => {
+      console.log('Timer complete - hiding loader');
+      if (customLoader && customLoader.style.display !== 'none') {
+        customLoader.classList.add('fade-out');
         setTimeout(() => {
-          if (customLoader) {
-            customLoader.style.opacity = '0';
-            setTimeout(() => {
-              customLoader.style.display = 'none';
-              if (isFirstTime) {
-                showOnboarding();
-              }
-            }, 500);
-          }
-        }, 300);
+          customLoader.style.display = 'none';
+          // Show scanning instructions after loader hides
+          showScanningInstructions();
+        }, 500);
+      }
+    }, 4000); // 4 seconds total (2 for steps + 2 for AR)
+    
+    // Scanning state management
+    function showScanningInstructions() {
+      console.log('Showing scanning instructions');
+      const scanningOverlay = document.getElementById('scanning-overlay');
+      if (scanningOverlay) {
+        scanningOverlay.style.display = 'flex';
+        scanningOverlay.style.animation = 'fadeIn 0.5s ease-out';
+        // Setup button listener after overlay is shown
+        setTimeout(setupContinueButton, 100);
+      }
+    }
+    
+    function hideScanningInstructions() {
+      console.log('Hiding scanning instructions');
+      const scanningOverlay = document.getElementById('scanning-overlay');
+      if (scanningOverlay) {
+        scanningOverlay.classList.add('fade-out');
+        setTimeout(() => scanningOverlay.style.display = 'none', 500);
+      }
+    }
+    
+    // Continue button event listener - moved to main DOMContentLoaded
+    const setupContinueButton = () => {
+      const continueBtn = document.getElementById('continue-scanning-btn');
+      if (continueBtn) {
+        console.log('Setting up continue button listener');
+        continueBtn.addEventListener('click', (e) => {
+          e.preventDefault();
+          console.log('Continue button clicked - hiding scanning overlay');
+          hideScanningInstructions();
+        });
+        
+        // Also add touch event for mobile
+        continueBtn.addEventListener('touchend', (e) => {
+          e.preventDefault();
+          console.log('Continue button touched - hiding scanning overlay');
+          hideScanningInstructions();
+        });
+      } else {
+        console.log('Continue button not found');
       }
     };
     
-    // Start loading sequence
-    setTimeout(processLoadingStep, 500);
     
     // Onboarding management
     const showOnboarding = () => {
@@ -253,22 +389,117 @@
       
       // Target tracking events with enhanced feedback
       scene.addEventListener('artargetfound', (ev) => {
+        console.log('AR Target Found Event:', ev);
         const ref = ev.detail && ev.detail.referenceImage;
+        console.log('Reference image:', ref);
         if (!ref || ref.name === 'my-reference-image') {
           aimOverlay.classList.add('hidden');
           pauseOverlay();
-          showStatus('¡Objetivo encontrado!', 'success', 2000);
+          showStatus('¡Objetivo detectado!', 'success');
+          
+          
+          // Show progress ring
+          const progressRing = document.getElementById('progress-ring');
+          if (progressRing) {
+            progressRing.style.opacity = '1';
+            progressRing.classList.add('visible');
+            console.log('Progress ring shown on target found');
+          }
+          
+          // Show distance feedback
+          const distanceFeedback = document.getElementById('distance-feedback');
+          if (distanceFeedback) {
+            distanceFeedback.classList.add('visible');
+            console.log('Distance feedback shown');
+          }
         }
       });
       
       scene.addEventListener('artargetlost', (ev) => {
+        console.log('AR Target Lost Event:', ev);
         const ref = ev.detail && ev.detail.referenceImage;
         if (!ref || ref.name === 'my-reference-image') {
           aimOverlay.classList.remove('hidden');
           playOverlay();
           showStatus('Buscando objetivo...', 'warning', 2000);
+          
+          
+          // Hide progress ring
+          const progressRing = document.getElementById('progress-ring');
+          if (progressRing) {
+            progressRing.style.opacity = '0';
+            progressRing.classList.remove('visible');
+            console.log('Progress ring hidden on target lost');
+          }
+          
+          // Hide distance feedback
+          const distanceFeedback = document.getElementById('distance-feedback');
+          if (distanceFeedback) {
+            distanceFeedback.classList.remove('visible');
+            console.log('Distance feedback hidden');
+          }
         }
       });
+      
+      // Confidence tracking for progress ring
+      scene.addEventListener('arconfidencechanged', (ev) => {
+        console.log('AR Confidence Changed:', ev.detail.confidence);
+        const confidence = ev.detail.confidence;
+        const progressRing = document.getElementById('progress-ring');
+        const progressFill = progressRing?.querySelector('.progress-fill');
+        
+        if (progressFill) {
+          // Update progress ring based on confidence (0-1)
+          const radius = 50; // Match the SVG radius
+          const circumference = 2 * Math.PI * radius; // ~314.16
+          const offset = circumference * (1 - confidence);
+          
+          // Set stroke-dasharray if not already set
+          progressFill.style.strokeDasharray = circumference;
+          progressFill.style.strokeDashoffset = offset;
+          
+          // Change color for high confidence
+          if (confidence > 0.8) {
+            progressFill.classList.add('high-confidence');
+          } else {
+            progressFill.classList.remove('high-confidence');
+          }
+          
+          console.log('Progress ring updated:', confidence);
+          
+          // Update distance feedback based on scale
+          updateDistanceFeedback();
+        } else {
+          console.log('Progress fill element not found!');
+        }
+      });
+      
+      // Distance feedback system
+      function updateDistanceFeedback() {
+        const arRoot = document.querySelector('#main-scene');
+        const distanceFeedback = document.getElementById('distance-feedback');
+        
+        if (!arRoot || !arRoot.object3D || !distanceFeedback) return;
+        
+        const scale = arRoot.object3D.scale.x;
+        
+        // Remove all distance classes
+        distanceFeedback.classList.remove('too-close', 'too-far', 'optimal');
+        
+        if (scale > 1.2) {
+          // Too close
+          distanceFeedback.classList.add('too-close');
+          distanceFeedback.textContent = 'Aléjate un poco';
+        } else if (scale < 0.8) {
+          // Too far
+          distanceFeedback.classList.add('too-far');
+          distanceFeedback.textContent = 'Acércate más';
+        } else {
+          // Optimal distance
+          distanceFeedback.classList.add('optimal');
+          distanceFeedback.textContent = 'Perfecto! Mantén la distancia';
+        }
+      }
       
       // Error handling
       scene.addEventListener('ar-error', (ev) => {
@@ -418,6 +649,100 @@
         </div>
     </div>
 
+    <!-- Scanning Instructions Overlay -->
+    <div id="scanning-overlay" style="
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: rgba(0, 0, 0, 0.85);
+        backdrop-filter: blur(8px);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        color: white;
+        z-index: 9999;
+    ">
+        <div style="
+            text-align: center;
+            max-width: 350px;
+            padding: 2rem;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        ">
+            <!-- Scanning Animation -->
+            <div style="
+                width: 100px;
+                height: 100px;
+                margin: 0 auto 2rem auto;
+                position: relative;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            ">
+                <svg viewBox="0 0 100 100" style="
+                    width: 100%;
+                    height: 100%;
+                    animation: scanPulse 2s ease-in-out infinite;
+                ">
+                    <!-- Scanning Frame -->
+                    <rect x="20" y="20" width="60" height="60" rx="8" 
+                          fill="none" stroke="#FFD700" stroke-width="3" 
+                          stroke-dasharray="10,5" opacity="0.8">
+                        <animateTransform attributeName="transform" 
+                                        type="rotate" 
+                                        values="0 50 50;360 50 50" 
+                                        dur="3s" 
+                                        repeatCount="indefinite"/>
+                    </rect>
+                    <!-- Center Target -->
+                    <circle cx="50" cy="50" r="8" fill="#FFD700" opacity="0.6"/>
+                    <!-- Corner Markers -->
+                    <path d="M15,15 L25,15 L25,25" stroke="#fff" stroke-width="2" fill="none"/>
+                    <path d="M85,15 L75,15 L75,25" stroke="#fff" stroke-width="2" fill="none"/>
+                    <path d="M15,85 L25,85 L25,75" stroke="#fff" stroke-width="2" fill="none"/>
+                    <path d="M85,85 L75,85 L75,75" stroke="#fff" stroke-width="2" fill="none"/>
+                </svg>
+            </div>
+            
+            <h2 style="
+                font-size: 1.5rem;
+                font-weight: 600;
+                margin: 0 0 1rem 0;
+                color: #FFD700;
+            ">Busca la imagen de referencia</h2>
+            
+            <p style="
+                font-size: 1rem;
+                opacity: 0.9;
+                margin: 0 0 1.5rem 0;
+                line-height: 1.4;
+            ">Apunta tu cámara hacia la imagen de referencia para activar la experiencia AR</p>
+            
+            <button id="continue-scanning-btn" style="
+                background: linear-gradient(45deg, #FFD700, #FFA500);
+                color: #000;
+                border: none;
+                padding: 12px 24px;
+                border-radius: 25px;
+                font-size: 1rem;
+                font-weight: 600;
+                cursor: pointer;
+                transition: all 0.3s ease;
+                margin-top: 1rem;
+                box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);
+            " onmouseover="this.style.transform='scale(1.05)'" 
+               onmouseout="this.style.transform='scale(1)'"
+               ontouchstart="this.style.transform='scale(1.05)'" 
+               ontouchend="this.style.transform='scale(1)'">
+                Continuar
+            </button>
+        </div>
+    </div>
+
     <!-- Onboarding Overlay -->
     <div id="onboarding-overlay" style="
         position: fixed;
@@ -490,6 +815,17 @@
             </button>
         </div>
     </div>
+
+    <!-- Progress Ring for Tracking Confidence -->
+    <div id="progress-ring">
+        <svg class="progress-circle" viewBox="0 0 100 100">
+            <circle class="progress-track" cx="50" cy="50" r="50" />
+            <circle class="progress-fill" cx="50" cy="50" r="50" />
+        </svg>
+    </div>
+
+    <!-- Distance Feedback -->
+    <div id="distance-feedback">Perfecto! Mantén la distancia</div>
 
     <!-- A-Frame AR Scene -->
     <a-scene encantar="stats: false; gizmos: false">
