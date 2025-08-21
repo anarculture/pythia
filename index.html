@@ -395,7 +395,6 @@
         const ref = ev.detail && ev.detail.referenceImage;
         console.log('Reference image:', ref);
         if (!ref || ref.name === 'my-reference-image') {
-          aimOverlay.classList.add('hidden');
           pauseOverlay();
           showStatus('¡Objetivo detectado!', 'success');
           
@@ -405,10 +404,10 @@
             scanningIndicator.style.display = 'none';
           }
           
-          // Make aim overlay glow and fade out
+          // Make aim overlay glow and fade out, then hide completely
           aimOverlay.classList.add('glow-exit');
           setTimeout(() => {
-            aimOverlay.classList.add('hidden');
+            aimOverlay.style.display = 'none';
             aimOverlay.classList.remove('glow-exit');
           }, 1500); // Match animation duration
           
@@ -425,6 +424,7 @@
         console.log('AR Target Lost Event:', ev);
         const ref = ev.detail && ev.detail.referenceImage;
         if (!ref || ref.name === 'my-reference-image') {
+          aimOverlay.style.display = 'block';
           aimOverlay.classList.remove('hidden');
           playOverlay();
           // Show scanning indicator again (remove duplicate status message)
