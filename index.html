@@ -79,43 +79,6 @@
             50% { opacity: 1; transform: scale(1.3); }
         }
 
-        /* Distance Feedback */
-        #distance-feedback {
-            position: fixed;
-            bottom: 20%;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 99998;
-            pointer-events: none;
-            opacity: 0;
-            transition: opacity 0.3s ease;
-            font-size: 18px;
-            font-weight: bold;
-            color: #FFFFFF;
-            text-shadow: 0 2px 8px rgba(0, 0, 0, 0.8);
-            background: rgba(0, 0, 0, 0.5);
-            padding: 8px 16px;
-            border-radius: 20px;
-        }
-        
-        #distance-feedback.visible {
-            opacity: 1;
-        }
-        
-        #distance-feedback.too-close {
-            background: rgba(255, 0, 0, 0.7);
-            color: #FFFFFF;
-        }
-        
-        #distance-feedback.too-far {
-            background: rgba(255, 255, 0, 0.7);
-            color: #000000;
-        }
-        
-        #distance-feedback.optimal {
-            background: rgba(0, 255, 0, 0.7);
-            color: #000000;
-        }
 
         /* Aim overlay (LEGO) */
         #aim-overlay {
@@ -389,7 +352,9 @@
         console.log('AR Ready - waiting for instruction overlay to be dismissed');
       });
       
-      // Target tracking events with enhanced feedback
+      // Persistent model tracking - anchor after first detection
+      let modelAnchored = false;
+      
       scene.addEventListener('artargetfound', (ev) => {
         console.log('AR Target Found Event:', ev);
         const ref = ev.detail && ev.detail.referenceImage;
@@ -411,65 +376,89 @@
             aimOverlay.classList.remove('glow-exit');
           }, 1500); // Match animation duration
           
-          // Show distance feedback
-          const distanceFeedback = document.getElementById('distance-feedback');
-          if (distanceFeedback) {
-            distanceFeedback.classList.add('visible');
-            console.log('Distance feedback shown');
+          // Show centered model after first detection
+          if (!modelAnchored) {
+            setTimeout(() => {
+              showCenteredModel();
+              modelAnchored = true;
+              showStatus('Modelo activado - centrado en tu visor', 'success', 4000);
+            }, 1000); // Quick activation
           }
         }
       });
       
-      scene.addEventListener('artargetlost', (ev) => {
-        console.log('AR Target Lost Event:', ev);
-        const ref = ev.detail && ev.detail.referenceImage;
-        if (!ref || ref.name === 'my-reference-image') {
-          aimOverlay.style.display = 'block';
-          aimOverlay.classList.remove('hidden');
-          playOverlay();
-          // Show scanning indicator again (remove duplicate status message)
-          const scanningIndicator = document.getElementById('scanning-indicator');
-          if (scanningIndicator) {
-            scanningIndicator.style.display = 'flex';
-          }
-          
-          
-          // Hide distance feedback
-          const distanceFeedback = document.getElementById('distance-feedback');
-          if (distanceFeedback) {
-            distanceFeedback.classList.remove('visible');
-            console.log('Distance feedback hidden');
-          }
+      // Show centered model function
+      const showCenteredModel = () => {
+        console.log('Showing centered model...');
+        const arRoot = document.getElementById('main-scene');
+        const camera = document.querySelector('ar-camera');
+        
+        if (!arRoot || !camera) {
+          console.error('Could not find AR elements');
+          return;
         }
-      });
+        
+        // Create centered container directly in scene
+        const centeredContainer = document.createElement('a-entity');
+        centeredContainer.id = 'centered-model';
+        
+        // Position model centered in camera view (5 units back)
+        centeredContainer.setAttribute('position', '0 0 -5');
+        centeredContainer.setAttribute('scale', '1 1 1');
+        
+        // Create the model element
+        const centeredModel = document.createElement('a-gltf-model');
+        centeredModel.id = 'centered-face-model';
+        centeredModel.setAttribute('src', 'base_basic_shaded.glb');
+        centeredModel.setAttribute('position', '0 -1 0');
+        centeredModel.setAttribute('scale', '1 1 1');
+        centeredModel.setAttribute('animation', 'property: rotation; to: 0 360 0; loop: true; dur: 5000');
+        centeredModel.setAttribute('shadow', 'cast: true; receive: true');
+        
+        // Create lights
+        const ambientLight = document.createElement('a-light');
+        ambientLight.setAttribute('type', 'ambient');
+        ambientLight.setAttribute('color', '#ffffff');
+        ambientLight.setAttribute('intensity', '2.51');
+        
+        const directionalLight = document.createElement('a-light');
+        directionalLight.setAttribute('type', 'directional');
+        directionalLight.setAttribute('position', '2 4 2');
+        directionalLight.setAttribute('color', '#ffffff');
+        directionalLight.setAttribute('intensity', '3.14');
+        directionalLight.setAttribute('shadow', 'cast: true');
+        
+        const pointLight1 = document.createElement('a-light');
+        pointLight1.setAttribute('type', 'point');
+        pointLight1.setAttribute('position', '-1 2 1');
+        pointLight1.setAttribute('color', '#4CAF50');
+        pointLight1.setAttribute('intensity', '30');
+        pointLight1.setAttribute('decay', '2');
+        
+        const pointLight2 = document.createElement('a-light');
+        pointLight2.setAttribute('type', 'point');
+        pointLight2.setAttribute('position', '1 2 1');
+        pointLight2.setAttribute('color', '#2196F3');
+        pointLight2.setAttribute('intensity', '30');
+        pointLight2.setAttribute('decay', '2');
+        
+        // Add elements to container
+        centeredContainer.appendChild(centeredModel);
+        centeredContainer.appendChild(ambientLight);
+        centeredContainer.appendChild(directionalLight);
+        centeredContainer.appendChild(pointLight1);
+        centeredContainer.appendChild(pointLight2);
+        
+        // Add to main scene
+        scene.appendChild(centeredContainer);
+        
+        // Hide original AR-tracked model
+        arRoot.setAttribute('visible', 'false');
+        
+        console.log('Model centered at position: 0 0 -5');
+      };
       
       
-      // Distance feedback system
-      function updateDistanceFeedback() {
-        const arRoot = document.querySelector('#main-scene');
-        const distanceFeedback = document.getElementById('distance-feedback');
-        
-        if (!arRoot || !arRoot.object3D || !distanceFeedback) return;
-        
-        const scale = arRoot.object3D.scale.x;
-        
-        // Remove all distance classes
-        distanceFeedback.classList.remove('too-close', 'too-far', 'optimal');
-        
-        if (scale > 1.2) {
-          // Too close
-          distanceFeedback.classList.add('too-close');
-          distanceFeedback.textContent = 'Aléjate un poco';
-        } else if (scale < 0.8) {
-          // Too far
-          distanceFeedback.classList.add('too-far');
-          distanceFeedback.textContent = 'Acércate más';
-        } else {
-          // Optimal distance
-          distanceFeedback.classList.add('optimal');
-          distanceFeedback.textContent = 'Perfecto! Mantén la distancia';
-        }
-      }
       
       // Error handling
       scene.addEventListener('ar-error', (ev) => {
@@ -787,8 +776,6 @@
     </div>
 
 
-    <!-- Distance Feedback -->
-    <div id="distance-feedback">Perfecto! Mantén la distancia</div>
 
     <!-- Scanning Indicator -->
     <div id="scanning-indicator" style="
@@ -949,7 +936,7 @@ AFRAME.registerComponent('smooth-pose', {
 });
 </script>
 
-<!-- Adaptive tracker: fast acquisition (md) → stable (lg) after 1s -->
+<!-- Adaptive tracker: optimized for one-time detection -->
 <script>
 (function adaptiveTrackerRes(){
   const tracker = document.querySelector('ar-image-tracker');
@@ -960,18 +947,25 @@ AFRAME.registerComponent('smooth-pose', {
   cam.setAttribute('resolution', 'lg');
   tracker.setAttribute('resolution', 'md');
 
+  let trackerDisabled = false;
   let timer = 0;
+  
   document.addEventListener('artargetfound', (ev)=>{
     const ref = ev.detail && ev.detail.referenceImage;
     if (ref && ref.name !== 'my-reference-image') return;
-    clearTimeout(timer);
-    timer = setTimeout(()=> tracker.setAttribute('resolution','lg'), 1000);
-  });
-  document.addEventListener('artargetlost', (ev)=>{
-    const ref = ev.detail && ev.detail.referenceImage;
-    if (ref && ref.name !== 'my-reference-image') return;
-    clearTimeout(timer);
-    tracker.setAttribute('resolution','md'); // easier relock if lost
+    
+    if (!trackerDisabled) {
+      clearTimeout(timer);
+      timer = setTimeout(()=> {
+        tracker.setAttribute('resolution','lg');
+        // Disable tracker after model is anchored (3 seconds total)
+        setTimeout(() => {
+          console.log('Disabling tracker - model is now persistent');
+          tracker.setAttribute('enabled', 'false');
+          trackerDisabled = true;
+        }, 2000);
+      }, 1000);
+    }
   });
 })();
 </script>
