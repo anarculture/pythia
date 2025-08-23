@@ -369,13 +369,18 @@
             aimOverlay.classList.remove('glow-exit');
           }, 1500); // Match animation duration
           
-          // Show centered model after first detection
+          // Show centered model immediately after first detection
           if (!modelAnchored) {
-            setTimeout(() => {
-              showCenteredModel();
-              modelAnchored = true;
-              showStatus('Modelo activado - centrado en tu visor', 'success', 4000);
-            }, 1000); // Quick activation
+            // Hide AR-tracked model immediately
+            const arRoot = document.getElementById('main-scene');
+            if (arRoot) {
+              arRoot.setAttribute('visible', 'false');
+            }
+            
+            // Show centered model instantly
+            showCenteredModel();
+            modelAnchored = true;
+            showStatus('Modelo activado - centrado en tu visor', 'success', 4000);
           }
         }
       });
