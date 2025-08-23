@@ -153,6 +153,72 @@
             animation: slideInUp 0.5s ease-out;
         }
         
+        /* Particle burst animation for model unlock */
+        .particle-burst {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 300px;
+            height: 300px;
+            pointer-events: none;
+            z-index: 1500;
+        }
+        
+        .particle {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: #FFD700;
+            border-radius: 50%;
+            opacity: 0;
+        }
+        
+        @keyframes sparkBurst {
+            0% {
+                opacity: 1;
+                transform: scale(0) rotate(0deg);
+                filter: brightness(2);
+            }
+            50% {
+                opacity: 1;
+                filter: brightness(1.5);
+            }
+            100% {
+                opacity: 0;
+                transform: scale(1) rotate(360deg);
+                filter: brightness(0.5);
+            }
+        }
+        
+        @keyframes centerFlash {
+            0% {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(0);
+                background: radial-gradient(circle, #FFD700 0%, transparent 70%);
+            }
+            30% {
+                opacity: 0.8;
+                transform: translate(-50%, -50%) scale(1.5);
+            }
+            100% {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(3);
+            }
+        }
+        
+        .center-flash {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 1400;
+            animation: centerFlash 1s ease-out;
+        }
+        
         .status-indicator.success {
             background: rgba(76, 175, 80, 0.9);
         }
@@ -377,10 +443,11 @@
               arRoot.setAttribute('visible', 'false');
             }
             
-            // Show centered model instantly
+            // Show centered model instantly with particle burst
             showCenteredModel();
+            triggerParticleBurst();
             modelAnchored = true;
-            showStatus('Modelo activado - centrado en tu visor', 'success', 4000);
+            showStatus('¡Modelo desbloqueado!', 'success', 4000);
           }
         }
       });
@@ -454,6 +521,55 @@
         arRoot.setAttribute('visible', 'false');
         
         console.log('Model centered at position: 0 0 -5');
+      };
+      
+      // Particle burst effect for model unlock
+      const triggerParticleBurst = () => {
+        console.log('Triggering particle burst effect...');
+        
+        // Create center flash
+        const centerFlash = document.createElement('div');
+        centerFlash.className = 'center-flash';
+        document.body.appendChild(centerFlash);
+        
+        // Create particle burst container
+        const burstContainer = document.createElement('div');
+        burstContainer.className = 'particle-burst';
+        document.body.appendChild(burstContainer);
+        
+        // Generate particles in a burst pattern
+        const particleCount = 20;
+        for (let i = 0; i < particleCount; i++) {
+          const particle = document.createElement('div');
+          particle.className = 'particle';
+          
+          // Random position around center
+          const angle = (i / particleCount) * 360 + Math.random() * 30;
+          const distance = 50 + Math.random() * 100;
+          const x = Math.cos(angle * Math.PI / 180) * distance;
+          const y = Math.sin(angle * Math.PI / 180) * distance;
+          
+          particle.style.left = `calc(50% + ${x}px)`;
+          particle.style.top = `calc(50% + ${y}px)`;
+          
+          // Random animation delay and duration
+          const delay = Math.random() * 0.3;
+          const duration = 0.8 + Math.random() * 0.4;
+          
+          particle.style.animation = `sparkBurst ${duration}s ease-out ${delay}s forwards`;
+          
+          // Random colors (gold variations)
+          const colors = ['#FFD700', '#FFA500', '#FF8C00', '#FFE55C', '#FFFF00'];
+          particle.style.background = colors[Math.floor(Math.random() * colors.length)];
+          
+          burstContainer.appendChild(particle);
+        }
+        
+        // Clean up after animation
+        setTimeout(() => {
+          centerFlash.remove();
+          burstContainer.remove();
+        }, 2000);
       };
       
       
