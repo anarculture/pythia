@@ -627,7 +627,7 @@
         console.log('AR Target Found Event:', ev);
         const ref = ev.detail && ev.detail.referenceImage;
         console.log('Reference image:', ref);
-        if (ref && ref.name === 'my-reference-image') {
+        if (ref && (ref.name === 'my-reference-image' || ref.name === 'frog-reference-image')) {
           pauseOverlay();
           
           // Hide scanning indicator
@@ -650,7 +650,7 @@
               arRoot.setAttribute('visible', 'false');
             }
             
-            ARtedita.showCenteredModel();
+            ARtedita.showCenteredModel(ref.name);
             ARtedita.triggerParticleBurst();
             ARtedita.state.modelAnchored = true;
           }
@@ -658,8 +658,8 @@
       });
       
       // Show centered model function
-      ARtedita.showCenteredModel = () => {
-        console.log('Showing centered model...');
+      ARtedita.showCenteredModel = (referenceImageName) => {
+        console.log('Showing centered model for:', referenceImageName);
         const arRoot = document.getElementById('main-scene');
         const camera = document.querySelector('ar-camera');
         
@@ -676,13 +676,24 @@
         centeredContainer.setAttribute('position', '0 0 -5');
         centeredContainer.setAttribute('scale', '1 1 1');
         
-        // Create the model element
+        // Create the model element based on reference image
         const centeredModel = document.createElement('a-gltf-model');
-        centeredModel.id = 'centered-face-model';
-        centeredModel.setAttribute('src', 'base_basic_shaded.glb');
-        centeredModel.setAttribute('position', '0 -1 0');
-        centeredModel.setAttribute('scale', '1 1 1');
-        centeredModel.setAttribute('animation', 'property: rotation; to: 0 360 0; loop: true; dur: 5000');
+        
+        if (referenceImageName === 'my-reference-image') {
+          // Scene 1: Face model
+          centeredModel.id = 'centered-face-model';
+          centeredModel.setAttribute('src', 'base_basic_shaded.glb');
+          centeredModel.setAttribute('position', '0 -1 0');
+          centeredModel.setAttribute('scale', '1 1 1');
+          centeredModel.setAttribute('animation', 'property: rotation; to: 0 360 0; loop: true; dur: 5000');
+        } else if (referenceImageName === 'frog-reference-image') {
+          // Scene 2: Dancing Kermit
+          centeredModel.id = 'centered-kermit-model';
+          centeredModel.setAttribute('src', 'kermit_the_frog_dancing_twerk.glb');
+          centeredModel.setAttribute('position', '0 -0.5 0');
+          centeredModel.setAttribute('scale', '2 2 2');
+          centeredModel.setAttribute('animation', 'property: rotation; to: 0 360 0; loop: true; dur: 3000');
+        }
         centeredModel.setAttribute('shadow', 'cast: true; receive: true');
         
         // Create lights
@@ -883,6 +894,7 @@
         <ar-trackers>
             <ar-image-tracker resolution="lg" database-size="lg">
                 <ar-reference-image name="my-reference-image" src="reference.png"></ar-reference-image>
+                <ar-reference-image name="frog-reference-image" src="reference2.png"></ar-reference-image>
             </ar-image-tracker>
         </ar-trackers>
 
@@ -1055,7 +1067,7 @@ AFRAME.registerComponent('smooth-pose', {
   
   document.addEventListener('artargetfound', (ev)=>{
     const ref = ev.detail && ev.detail.referenceImage;
-    if (ref && ref.name !== 'my-reference-image') return;
+    if (ref && ref.name !== 'my-reference-image' && ref.name !== 'frog-reference-image') return;
     
     if (!trackerDisabled) {
       clearTimeout(timer);
