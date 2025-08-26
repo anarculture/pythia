@@ -435,23 +435,31 @@
     </style>
 </head>
 
+<body>
 <script>
   // ARtedita Application Namespace - eliminates global variable pollution
-  const ARtedita = {
-    // State management
+  window.ARtedita = {
     state: {
       loadingProgress: 0,
       stepIndex: 0,
-      isFirstTime: !localStorage.getItem('artedita-visited'),
-      loaderHidden: false,
-      arSystemReady: false,
-      cameraReady: false,
-      modelAnchored: false,
-      lastStatusTimeout: null
+      isReady: false,
+      overlayPaused: false
     },
     
     // DOM elements cache
     elements: {},
+    
+    // Debug logging function for mobile
+    debugLog: (message) => {
+      const timestamp = new Date().toLocaleTimeString();
+      const debugDiv = document.getElementById('debug-messages');
+      if (debugDiv) {
+        debugDiv.innerHTML += `<div>[${timestamp}] ${message}</div>`;
+        debugDiv.scrollTop = debugDiv.scrollHeight;
+      } else {
+        console.log(`[DEBUG] ${message}`);
+      }
+    },
     
     // Initialize DOM elements cache
     initElements() {
@@ -624,10 +632,15 @@
       let modelAnchored = false;
       
       scene.addEventListener('artargetfound', (ev) => {
-        console.log('AR Target Found Event:', ev);
+        console.log('🐸 AR Target Found Event:', ev);
+        ARtedita.debugLog('🐸 AR Target Found Event detected!');
         const ref = ev.detail && ev.detail.referenceImage;
-        console.log('Reference image:', ref);
-        if (ref && (ref.name === 'my-reference-image' || ref.name === 'frog-reference-image')) {
+        console.log('🐸 Reference image detected:', ref ? ref.name : 'none');
+        ARtedita.debugLog(`🐸 Reference: ${ref ? ref.name : 'none'}`);
+        console.log('🐸 Full reference object:', ref);
+        if (ref && ref.name === 'frog-reference-image') {
+          console.log('✅ FROG REFERENCE MATCHED - Starting model display');
+          ARtedita.debugLog('✅ FROG REFERENCE MATCHED!');
           pauseOverlay();
           
           // Hide scanning indicator
@@ -644,13 +657,16 @@
           
           // Show centered model immediately after first detection
           if (!ARtedita.state.modelAnchored) {
-            // Hide AR-tracked model immediately
             const arRoot = document.getElementById('main-scene');
             if (arRoot) {
               arRoot.setAttribute('visible', 'false');
             }
             
+            // Show centered model
+            ARtedita.debugLog('🎯 Creating Kermit model...');
             ARtedita.showCenteredModel(ref.name);
+            modelAnchored = true;
+            ARtedita.debugLog('🎉 Model creation complete!');
             ARtedita.triggerParticleBurst();
             ARtedita.state.modelAnchored = true;
           }
@@ -882,6 +898,27 @@
         Buscando objetivo...
     </div>
 
+    <!-- Debug Status Display -->
+    <div id="debug-status" style="
+        position: fixed;
+        bottom: 20px;
+        left: 20px;
+        right: 20px;
+        background: rgba(0, 0, 0, 0.8);
+        color: #00ff00;
+        padding: 15px;
+        border-radius: 10px;
+        font-family: 'Courier New', monospace;
+        font-size: 12px;
+        z-index: 5000;
+        max-height: 150px;
+        overflow-y: auto;
+        display: block;
+    ">
+        <div style="color: #FFD700; font-weight: bold; margin-bottom: 5px;">🐸 FROG DEBUG STATUS</div>
+        <div id="debug-messages">Waiting for AR system...</div>
+    </div>
+
     <!-- A-Frame AR Scene -->
     <a-scene encantar="stats: false; gizmos: false" device-orientation-permission-ui="enabled: false">
 
@@ -893,7 +930,7 @@
         <!-- Trackers -->
         <ar-trackers>
             <ar-image-tracker resolution="lg" database-size="lg">
-                <ar-reference-image name="my-reference-image" src="reference.png"></ar-reference-image>
+                <!-- <ar-reference-image name="my-reference-image" src="reference.png"></ar-reference-image> -->
                 <ar-reference-image name="frog-reference-image" src="reference2.png"></ar-reference-image>
             </ar-image-tracker>
         </ar-trackers>
@@ -1067,7 +1104,7 @@ AFRAME.registerComponent('smooth-pose', {
   
   document.addEventListener('artargetfound', (ev)=>{
     const ref = ev.detail && ev.detail.referenceImage;
-    if (ref && ref.name !== 'my-reference-image' && ref.name !== 'frog-reference-image') return;
+    if (ref && ref.name !== 'frog-reference-image') return;
     
     if (!trackerDisabled) {
       clearTimeout(timer);
