@@ -713,39 +713,8 @@
         }
         centeredModel.setAttribute('shadow', 'cast: true; receive: true');
         
-        // Create lights optimized for smaller model
-        const ambientLight = document.createElement('a-light');
-        ambientLight.setAttribute('type', 'ambient');
-        ambientLight.setAttribute('color', '#ffffff');
-        ambientLight.setAttribute('intensity', '1.8');
-        
-        const directionalLight = document.createElement('a-light');
-        directionalLight.setAttribute('type', 'directional');
-        directionalLight.setAttribute('position', '1.5 3 1.5');
-        directionalLight.setAttribute('color', '#ffffff');
-        directionalLight.setAttribute('intensity', '2.5');
-        directionalLight.setAttribute('shadow', 'cast: true');
-        
-        const pointLight1 = document.createElement('a-light');
-        pointLight1.setAttribute('type', 'point');
-        pointLight1.setAttribute('position', '-0.8 1.5 0.8');
-        pointLight1.setAttribute('color', '#FF5722');
-        pointLight1.setAttribute('intensity', '20');
-        pointLight1.setAttribute('decay', '2');
-        
-        const pointLight2 = document.createElement('a-light');
-        pointLight2.setAttribute('type', 'point');
-        pointLight2.setAttribute('position', '0.8 1.5 0.8');
-        pointLight2.setAttribute('color', '#2196F3');
-        pointLight2.setAttribute('intensity', '20');
-        pointLight2.setAttribute('decay', '2');
-        
         // Assemble the container
         centeredContainer.appendChild(centeredModel);
-        centeredContainer.appendChild(ambientLight);
-        centeredContainer.appendChild(directionalLight);
-        centeredContainer.appendChild(pointLight1);
-        centeredContainer.appendChild(pointLight2);
         
         // Add to scene
         scene.appendChild(centeredContainer);
