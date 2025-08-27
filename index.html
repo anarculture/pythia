@@ -7,6 +7,7 @@
     <!-- Local, version-pinned builds recommended for production -->
     <script src="encantar.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/aframe@1.6.0/dist/aframe-v1.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/c-frame/aframe-extras@7.2.0/dist/aframe-extras.min.js"></script>
     <script src="aframe-with-encantar.js"></script>
 
     <!-- Performance Optimization: Cap device pixel ratio -->
@@ -449,17 +450,6 @@
     // DOM elements cache
     elements: {},
     
-    // Debug logging function for mobile
-    debugLog: (message) => {
-      const timestamp = new Date().toLocaleTimeString();
-      const debugDiv = document.getElementById('debug-messages');
-      if (debugDiv) {
-        debugDiv.innerHTML += `<div>[${timestamp}] ${message}</div>`;
-        debugDiv.scrollTop = debugDiv.scrollHeight;
-      } else {
-        console.log(`[DEBUG] ${message}`);
-      }
-    },
     
     // Initialize DOM elements cache
     initElements() {
@@ -633,14 +623,11 @@
       
       scene.addEventListener('artargetfound', (ev) => {
         console.log('🐸 AR Target Found Event:', ev);
-        ARtedita.debugLog('🐸 AR Target Found Event detected!');
         const ref = ev.detail && ev.detail.referenceImage;
         console.log('🐸 Reference image detected:', ref ? ref.name : 'none');
-        ARtedita.debugLog(`🐸 Reference: ${ref ? ref.name : 'none'}`);
         console.log('🐸 Full reference object:', ref);
         if (ref && ref.name === 'frog-reference-image') {
           console.log('✅ FROG REFERENCE MATCHED - Starting model display');
-          ARtedita.debugLog('✅ FROG REFERENCE MATCHED!');
           pauseOverlay();
           
           // Hide scanning indicator
@@ -663,10 +650,8 @@
             }
             
             // Show centered model
-            ARtedita.debugLog('🎯 Creating Kermit model...');
             ARtedita.showCenteredModel(ref.name);
             modelAnchored = true;
-            ARtedita.debugLog('🎉 Model creation complete!');
             ARtedita.triggerParticleBurst();
             ARtedita.state.modelAnchored = true;
           }
@@ -703,13 +688,28 @@
           centeredModel.setAttribute('scale', '1 1 1');
           centeredModel.setAttribute('animation', 'property: rotation; to: 0 360 0; loop: true; dur: 5000');
         } else if (referenceImageName === 'frog-reference-image') {
-          // Scene 2: Dancing Kermit
-          centeredModel.id = 'centered-kermit-model';
-          centeredModel.setAttribute('src', 'kermit_the_frog_dancing_twerk.glb');
+          // Scene 2: Moonwalk Animation
+          centeredModel.id = 'centered-moonwalk-model';
+          centeredModel.setAttribute('src', 'moonwalk.glb');
           centeredModel.setAttribute('position', '0 -1.2 0');
           centeredModel.setAttribute('scale', '0.8 0.8 0.8');
-          centeredModel.setAttribute('animation-mixer', 'clip: *; loop: repeat; repetitions: Infinity');
+          centeredModel.setAttribute('animation-mixer', 'clip: *');
           centeredModel.setAttribute('animation', 'property: rotation; to: 0 360 0; loop: true; dur: 8000');
+          
+          // Add ambient and directional lighting for proper model visibility
+          const ambientLight = document.createElement('a-light');
+          ambientLight.setAttribute('type', 'ambient');
+          ambientLight.setAttribute('color', '#ffffff');
+          ambientLight.setAttribute('intensity', '0.6');
+          centeredContainer.appendChild(ambientLight);
+          
+          const directionalLight = document.createElement('a-light');
+          directionalLight.setAttribute('type', 'directional');
+          directionalLight.setAttribute('position', '2 4 2');
+          directionalLight.setAttribute('color', '#ffffff');
+          directionalLight.setAttribute('intensity', '0.8');
+          directionalLight.setAttribute('target', '#centered-moonwalk-model');
+          centeredContainer.appendChild(directionalLight);
         }
         centeredModel.setAttribute('shadow', 'cast: true; receive: true');
         
@@ -868,27 +868,6 @@
         Buscando objetivo...
     </div>
 
-    <!-- Debug Status Display -->
-    <div id="debug-status" style="
-        position: fixed;
-        bottom: 120px;
-        left: 20px;
-        right: 20px;
-        background: rgba(0, 0, 0, 0.7);
-        color: #00ff00;
-        padding: 10px;
-        border-radius: 8px;
-        font-family: 'Courier New', monospace;
-        font-size: 11px;
-        z-index: 1000;
-        max-height: 100px;
-        overflow-y: auto;
-        display: block;
-        pointer-events: none;
-    ">
-        <div style="color: #FFD700; font-weight: bold; margin-bottom: 5px;">🐸 FROG DEBUG STATUS</div>
-        <div id="debug-messages">Waiting for AR system...</div>
-    </div>
 
     <!-- A-Frame AR Scene -->
     <a-scene encantar="stats: false; gizmos: false" device-orientation-permission-ui="enabled: false">
