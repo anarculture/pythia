@@ -7,6 +7,7 @@
     <!-- Local, version-pinned builds recommended for production -->
     <script src="encantar.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/aframe@1.6.0/dist/aframe-v1.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/c-frame/aframe-extras@7.2.0/dist/aframe-extras.min.js"></script>
     <script src="aframe-with-encantar.js"></script>
 
     <!-- Performance Optimization: Cap device pixel ratio -->
@@ -435,23 +436,20 @@
     </style>
 </head>
 
+<body>
 <script>
   // ARtedita Application Namespace - eliminates global variable pollution
-  const ARtedita = {
-    // State management
+  window.ARtedita = {
     state: {
       loadingProgress: 0,
       stepIndex: 0,
-      isFirstTime: !localStorage.getItem('artedita-visited'),
-      loaderHidden: false,
-      arSystemReady: false,
-      cameraReady: false,
-      modelAnchored: false,
-      lastStatusTimeout: null
+      isReady: false,
+      overlayPaused: false
     },
     
     // DOM elements cache
     elements: {},
+    
     
     // Initialize DOM elements cache
     initElements() {
@@ -624,10 +622,12 @@
       let modelAnchored = false;
       
       scene.addEventListener('artargetfound', (ev) => {
-        console.log('AR Target Found Event:', ev);
+        console.log('🐸 AR Target Found Event:', ev);
         const ref = ev.detail && ev.detail.referenceImage;
-        console.log('Reference image:', ref);
-        if (ref && ref.name === 'my-reference-image') {
+        console.log('🐸 Reference image detected:', ref ? ref.name : 'none');
+        console.log('🐸 Full reference object:', ref);
+        if (ref && ref.name === 'frog-reference-image') {
+          console.log('✅ FROG REFERENCE MATCHED - Starting model display');
           pauseOverlay();
           
           // Hide scanning indicator
@@ -644,13 +644,14 @@
           
           // Show centered model immediately after first detection
           if (!ARtedita.state.modelAnchored) {
-            // Hide AR-tracked model immediately
             const arRoot = document.getElementById('main-scene');
             if (arRoot) {
               arRoot.setAttribute('visible', 'false');
             }
             
-            ARtedita.showCenteredModel();
+            // Show centered model
+            ARtedita.showCenteredModel(ref.name);
+            modelAnchored = true;
             ARtedita.triggerParticleBurst();
             ARtedita.state.modelAnchored = true;
           }
@@ -658,8 +659,8 @@
       });
       
       // Show centered model function
-      ARtedita.showCenteredModel = () => {
-        console.log('Showing centered model...');
+      ARtedita.showCenteredModel = (referenceImageName) => {
+        console.log('Showing centered model for:', referenceImageName);
         const arRoot = document.getElementById('main-scene');
         const camera = document.querySelector('ar-camera');
         
@@ -676,48 +677,43 @@
         centeredContainer.setAttribute('position', '0 0 -5');
         centeredContainer.setAttribute('scale', '1 1 1');
         
-        // Create the model element
+        // Create the model element based on reference image
         const centeredModel = document.createElement('a-gltf-model');
-        centeredModel.id = 'centered-face-model';
-        centeredModel.setAttribute('src', 'base_basic_shaded.glb');
-        centeredModel.setAttribute('position', '0 -1 0');
-        centeredModel.setAttribute('scale', '1 1 1');
-        centeredModel.setAttribute('animation', 'property: rotation; to: 0 360 0; loop: true; dur: 5000');
+        
+        if (referenceImageName === 'my-reference-image') {
+          // Scene 1: Face model
+          centeredModel.id = 'centered-face-model';
+          centeredModel.setAttribute('src', 'base_basic_shaded.glb');
+          centeredModel.setAttribute('position', '0 -1 0');
+          centeredModel.setAttribute('scale', '1 1 1');
+          centeredModel.setAttribute('animation', 'property: rotation; to: 0 360 0; loop: true; dur: 5000');
+        } else if (referenceImageName === 'frog-reference-image') {
+          // Scene 2: Moonwalk Animation
+          centeredModel.id = 'centered-moonwalk-model';
+          centeredModel.setAttribute('src', 'moonwalk.glb');
+          centeredModel.setAttribute('position', '0 -1.2 0');
+          centeredModel.setAttribute('scale', '0.8 0.8 0.8');
+          centeredModel.setAttribute('animation-mixer', 'clip: *');
+          
+          // Add ambient and directional lighting for proper model visibility
+          const ambientLight = document.createElement('a-light');
+          ambientLight.setAttribute('type', 'ambient');
+          ambientLight.setAttribute('color', '#ffffff');
+          ambientLight.setAttribute('intensity', '0.6');
+          centeredContainer.appendChild(ambientLight);
+          
+          const directionalLight = document.createElement('a-light');
+          directionalLight.setAttribute('type', 'directional');
+          directionalLight.setAttribute('position', '2 4 2');
+          directionalLight.setAttribute('color', '#ffffff');
+          directionalLight.setAttribute('intensity', '0.8');
+          directionalLight.setAttribute('target', '#centered-moonwalk-model');
+          centeredContainer.appendChild(directionalLight);
+        }
         centeredModel.setAttribute('shadow', 'cast: true; receive: true');
-        
-        // Create lights
-        const ambientLight = document.createElement('a-light');
-        ambientLight.setAttribute('type', 'ambient');
-        ambientLight.setAttribute('color', '#ffffff');
-        ambientLight.setAttribute('intensity', '2.51');
-        
-        const directionalLight = document.createElement('a-light');
-        directionalLight.setAttribute('type', 'directional');
-        directionalLight.setAttribute('position', '2 4 2');
-        directionalLight.setAttribute('color', '#ffffff');
-        directionalLight.setAttribute('intensity', '3.14');
-        directionalLight.setAttribute('shadow', 'cast: true');
-        
-        const pointLight1 = document.createElement('a-light');
-        pointLight1.setAttribute('type', 'point');
-        pointLight1.setAttribute('position', '-1 2 1');
-        pointLight1.setAttribute('color', '#4CAF50');
-        pointLight1.setAttribute('intensity', '30');
-        pointLight1.setAttribute('decay', '2');
-        
-        const pointLight2 = document.createElement('a-light');
-        pointLight2.setAttribute('type', 'point');
-        pointLight2.setAttribute('position', '1 2 1');
-        pointLight2.setAttribute('color', '#2196F3');
-        pointLight2.setAttribute('intensity', '30');
-        pointLight2.setAttribute('decay', '2');
         
         // Assemble the container
         centeredContainer.appendChild(centeredModel);
-        centeredContainer.appendChild(ambientLight);
-        centeredContainer.appendChild(directionalLight);
-        centeredContainer.appendChild(pointLight1);
-        centeredContainer.appendChild(pointLight2);
         
         // Add to scene
         scene.appendChild(centeredContainer);
@@ -871,6 +867,7 @@
         Buscando objetivo...
     </div>
 
+
     <!-- A-Frame AR Scene -->
     <a-scene encantar="stats: false; gizmos: false" device-orientation-permission-ui="enabled: false">
 
@@ -882,7 +879,8 @@
         <!-- Trackers -->
         <ar-trackers>
             <ar-image-tracker resolution="lg" database-size="lg">
-                <ar-reference-image name="my-reference-image" src="reference.png"></ar-reference-image>
+                <!-- <ar-reference-image name="my-reference-image" src="reference.png"></ar-reference-image> -->
+                <ar-reference-image name="frog-reference-image" src="reference2.png"></ar-reference-image>
             </ar-image-tracker>
         </ar-trackers>
 
@@ -1055,7 +1053,7 @@ AFRAME.registerComponent('smooth-pose', {
   
   document.addEventListener('artargetfound', (ev)=>{
     const ref = ev.detail && ev.detail.referenceImage;
-    if (ref && ref.name !== 'my-reference-image') return;
+    if (ref && ref.name !== 'frog-reference-image') return;
     
     if (!trackerDisabled) {
       clearTimeout(timer);
