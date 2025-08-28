@@ -457,8 +457,7 @@
         scene: document.querySelector('a-scene'),
         aimOverlay: document.getElementById('aim-overlay'),
         customLoader: document.getElementById('custom-loader'),
-        progressBar: document.getElementById('progress-bar'),
-        scanningIndicator: document.getElementById('scanning-indicator')
+        progressBar: document.getElementById('progress-bar')
       };
     }
   };
@@ -556,6 +555,25 @@
       // Only listen for AR ready events - no timeout fallback
       scene.addEventListener('arready', () => {
         console.log('AR ready event received!');
+        
+        // Fix position/scale corruption
+        setTimeout(() => {
+          const moonwalkModel = document.getElementById('moonwalk-model');
+          const faceModel = document.getElementById('face-model');
+          
+          if (moonwalkModel) {
+            moonwalkModel.object3D.position.set(0, -1.2, 0);
+            moonwalkModel.object3D.scale.set(0.8, 0.8, 0.8);
+            console.log('Fixed moonwalk model positioning');
+          }
+          
+          if (faceModel) {
+            faceModel.object3D.position.set(0, -1, 0);
+            faceModel.object3D.scale.set(1, 1, 1);
+            console.log('Fixed face model positioning');
+          }
+        }, 500);
+        
         if (!ARtedita.state.loaderHidden) {
           ARtedita.state.loaderHidden = true;
           ARtedita.hideLoaderAndShowOnboarding();
@@ -622,18 +640,22 @@
       let modelAnchored = false;
       
       scene.addEventListener('artargetfound', (ev) => {
-        console.log('🐸 AR Target Found Event:', ev);
+        console.log('🎯 AR Target Found Event:', ev);
         const ref = ev.detail && ev.detail.referenceImage;
-        console.log('🐸 Reference image detected:', ref ? ref.name : 'none');
-        console.log('🐸 Full reference object:', ref);
-        if (ref && ref.name === 'frog-reference-image') {
-          console.log('✅ FROG REFERENCE MATCHED - Starting model display');
+        console.log('🎯 Reference image detected:', ref ? ref.name : 'none');
+        
+        if (ref && (ref.name === 'face-target' || ref.name === 'frog-target')) {
+          console.log(`✅ TARGET MATCHED: ${ref.name}`);
           pauseOverlay();
           
-          // Hide scanning indicator
-          if (ARtedita.elements.scanningIndicator) {
-            ARtedita.elements.scanningIndicator.style.display = 'none';
+          // Update target indicator
+          const targetIndicator = document.getElementById('target-indicator');
+          const targetName = document.getElementById('target-name');
+          if (targetIndicator && targetName) {
+            targetName.textContent = ref.name === 'face-target' ? 'Face Model' : 'Moonwalk Animation';
+            targetIndicator.style.display = 'block';
           }
+          
           
           // Fade out aim overlay smoothly
           if (aimOverlay) {
@@ -642,86 +664,62 @@
             setTimeout(() => aimOverlay.style.display = 'none', 1000);
           }
           
-          // Show centered model immediately after first detection
+          // Trigger particle burst for visual feedback
           if (!ARtedita.state.modelAnchored) {
-            const arRoot = document.getElementById('main-scene');
-            if (arRoot) {
-              arRoot.setAttribute('visible', 'false');
-            }
-            
-            // Show centered model
-            ARtedita.showCenteredModel(ref.name);
-            modelAnchored = true;
             ARtedita.triggerParticleBurst();
             ARtedita.state.modelAnchored = true;
           }
         }
       });
       
-      // Show centered model function
-      ARtedita.showCenteredModel = (referenceImageName) => {
-        console.log('Showing centered model for:', referenceImageName);
-        const arRoot = document.getElementById('main-scene');
-        const camera = document.querySelector('ar-camera');
+      scene.addEventListener('artargetlost', (ev) => {
+        console.log('🎯 AR Target Lost Event:', ev);
+        const ref = ev.detail && ev.detail.referenceImage;
         
-        if (!arRoot || !camera) {
-          console.error('Could not find AR elements');
-          return;
-        }
-        
-        // Create centered container directly in scene
-        const centeredContainer = document.createElement('a-entity');
-        centeredContainer.id = 'centered-model';
-        
-        // Position model centered in camera view (5 units back)
-        centeredContainer.setAttribute('position', '0 0 -5');
-        centeredContainer.setAttribute('scale', '1 1 1');
-        
-        // Create the model element based on reference image
-        const centeredModel = document.createElement('a-gltf-model');
-        
-        if (referenceImageName === 'my-reference-image') {
-          // Scene 1: Face model
-          centeredModel.id = 'centered-face-model';
-          centeredModel.setAttribute('src', 'base_basic_shaded.glb');
-          centeredModel.setAttribute('position', '0 -1 0');
-          centeredModel.setAttribute('scale', '1 1 1');
-          centeredModel.setAttribute('animation', 'property: rotation; to: 0 360 0; loop: true; dur: 5000');
-        } else if (referenceImageName === 'frog-reference-image') {
-          // Scene 2: Moonwalk Animation
-          centeredModel.id = 'centered-moonwalk-model';
-          centeredModel.setAttribute('src', 'moonwalk.glb');
-          centeredModel.setAttribute('position', '0 -1.2 0');
-          centeredModel.setAttribute('scale', '0.8 0.8 0.8');
-          centeredModel.setAttribute('animation-mixer', 'clip: *');
+        if (ref && (ref.name === 'face-target' || ref.name === 'frog-target')) {
+          console.log(`❌ TARGET LOST: ${ref.name}`);
           
-          // Add ambient and directional lighting for proper model visibility
-          const ambientLight = document.createElement('a-light');
-          ambientLight.setAttribute('type', 'ambient');
-          ambientLight.setAttribute('color', '#ffffff');
-          ambientLight.setAttribute('intensity', '0.6');
-          centeredContainer.appendChild(ambientLight);
+          // Hide target indicator
+          const targetIndicator = document.getElementById('target-indicator');
+          if (targetIndicator) {
+            targetIndicator.style.display = 'none';
+          }
           
-          const directionalLight = document.createElement('a-light');
-          directionalLight.setAttribute('type', 'directional');
-          directionalLight.setAttribute('position', '2 4 2');
-          directionalLight.setAttribute('color', '#ffffff');
-          directionalLight.setAttribute('intensity', '0.8');
-          directionalLight.setAttribute('target', '#centered-moonwalk-model');
-          centeredContainer.appendChild(directionalLight);
+          
+          // Show aim overlay again
+          if (aimOverlay) {
+            aimOverlay.style.display = 'block';
+            aimOverlay.style.opacity = '1';
+          }
+          
+          playOverlay();
+          ARtedita.state.modelAnchored = false;
         }
-        centeredModel.setAttribute('shadow', 'cast: true; receive: true');
-        
-        // Assemble the container
-        centeredContainer.appendChild(centeredModel);
-        
-        // Add to scene
-        scene.appendChild(centeredContainer);
-        
-        // Hide original AR-tracked model
-        arRoot.setAttribute('visible', 'false');
-        
-        console.log('Centered model created and added to scene');
+      });
+      
+      // Browser compatibility check
+      ARtedita.checkBrowserSupport = () => {
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+          ARtedita.showError('Camera access not supported in this browser. Please use a modern mobile browser.');
+          return false;
+        }
+        return true;
+      };
+      
+      ARtedita.showError = (message) => {
+        const errorDiv = document.createElement('div');
+        errorDiv.style.cssText = `
+          position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+          background: #ff4444; color: white; padding: 20px; border-radius: 10px;
+          text-align: center; z-index: 9999; max-width: 80%;
+        `;
+        errorDiv.textContent = message;
+        document.body.appendChild(errorDiv);
+      };
+      
+      // Check browser support on load
+      if (!ARtedita.checkBrowserSupport()) {
+        return;
       };
       
       // Particle burst animation for unlock effect
@@ -779,7 +777,16 @@
       
       // Error handling
       scene.addEventListener('ar-error', (ev) => {
+        console.error('AR Error:', ev.detail);
+        ARtedita.showError('AR initialization failed. Please check camera permissions and try again.');
       });
+      
+      // Camera permission denied handling
+      navigator.mediaDevices.getUserMedia({ video: true })
+        .catch((err) => {
+          console.error('Camera permission denied:', err);
+          ARtedita.showError('Camera permission required for AR. Please allow camera access and refresh.');
+        });
       
       // Camera ready event - use AR stack instead of manual getUserMedia
       scene.addEventListener('arready', () => {
@@ -840,36 +847,35 @@
 
 
 
-    <!-- Scanning Indicator -->
-    <div id="scanning-indicator" style="
+
+    <!-- Target Detection Indicator -->
+    <div id="target-indicator" style="
         position: fixed;
-        top: 20px;
+        top: 60px;
         left: 50%;
         transform: translateX(-50%);
-        background: rgba(255, 193, 7, 0.9);
+        background: rgba(0, 255, 0, 0.9);
         color: #000;
-        padding: 10px 20px;
-        border-radius: 20px;
-        font-size: 14px;
+        padding: 8px 16px;
+        border-radius: 15px;
+        font-size: 12px;
         font-weight: 600;
-        z-index: 4500;
+        z-index: 4600;
         display: none;
-        align-items: center;
-        gap: 8px;
+        font-family: 'Courier New', monospace;
     ">
-        <div style="
-            width: 8px;
-            height: 8px;
-            background: #000;
-            border-radius: 50%;
-            animation: pulse 1.5s ease-in-out infinite;
-        "></div>
-        Buscando objetivo...
+        Target: <span id="target-name">None</span>
     </div>
 
 
     <!-- A-Frame AR Scene -->
     <a-scene encantar="stats: false; gizmos: false" device-orientation-permission-ui="enabled: false">
+        
+        <!-- Asset preloading -->
+        <a-assets>
+            <a-asset-item id="face-model-asset" src="base_basic_shaded.glb"></a-asset-item>
+            <a-asset-item id="moonwalk-model-asset" src="moonwalk.glb"></a-asset-item>
+        </a-assets>
 
         <!-- Sources of data -->
         <ar-sources>
@@ -879,8 +885,8 @@
         <!-- Trackers -->
         <ar-trackers>
             <ar-image-tracker resolution="lg" database-size="lg">
-                <!-- <ar-reference-image name="my-reference-image" src="reference.png"></ar-reference-image> -->
-                <ar-reference-image name="frog-reference-image" src="reference2.png"></ar-reference-image>
+                <ar-reference-image name="face-target" src="reference.png"></ar-reference-image>
+                <ar-reference-image name="frog-target" src="reference2.png"></ar-reference-image>
             </ar-image-tracker>
         </ar-trackers>
 
@@ -993,15 +999,34 @@
     <!-- AR Camera -->
     <ar-camera></ar-camera>
 
-        <!-- MAIN AR SCENE (wrapped in smoothing container) -->
-        <ar-root id="main-scene" reference-image="my-reference-image" visible="true">
+        <!-- Face Target AR Scene -->
+        <ar-root id="face-scene" reference-image="face-target" visible="true">
             <!-- Smoothed container for stability -->
-            <a-entity id="smoothed" smooth-pose="pos:0.18; rot:0.18; scale:0.22">
+            <a-entity id="face-smoothed" smooth-pose="pos:0.18; rot:0.18; scale:0.22">
               <a-gltf-model id="face-model"
-                            src="base_basic_shaded.glb"
+                            src="#face-model-asset"
                             position="0 -1 0"
                             scale="1 1 1"
                             animation="property: rotation; to: 0 360 0; loop: true; dur: 5000"
+                            shadow="cast: true; receive: true">
+              </a-gltf-model>
+
+              <a-light type="ambient" color="#ffffff" intensity="2.51"></a-light>
+              <a-light type="directional" position="2 4 2" color="#ffffff" intensity="3.14" shadow="cast: true"></a-light>
+              <a-light type="point" position="-1 2 1" color="#4CAF50" intensity="30" decay="2"></a-light>
+              <a-light type="point" position="1 2 1" color="#2196F3" intensity="30" decay="2"></a-light>
+            </a-entity>
+        </ar-root>
+
+        <!-- Frog Target AR Scene -->
+        <ar-root id="frog-scene" reference-image="frog-target" visible="true">
+            <!-- Smoothed container for stability -->
+            <a-entity id="frog-smoothed" smooth-pose="pos:0.18; rot:0.18; scale:0.22">
+              <a-gltf-model id="moonwalk-model"
+                            src="#moonwalk-model-asset"
+                            position="0 -1.2 0"
+                            scale="0.8 0.8 0.8"
+                            animation-mixer="clip: *"
                             shadow="cast: true; receive: true">
               </a-gltf-model>
 
@@ -1053,19 +1078,15 @@ AFRAME.registerComponent('smooth-pose', {
   
   document.addEventListener('artargetfound', (ev)=>{
     const ref = ev.detail && ev.detail.referenceImage;
-    if (ref && ref.name !== 'frog-reference-image') return;
-    
-    if (!trackerDisabled) {
-      clearTimeout(timer);
-      timer = setTimeout(()=> {
-        tracker.setAttribute('resolution','lg');
-        // Disable tracker after model is anchored (3 seconds total)
-        setTimeout(() => {
-          console.log('Disabling tracker - model is now persistent');
-          tracker.setAttribute('enabled', 'false');
-          trackerDisabled = true;
-        }, 2000);
-      }, 1000);
+    if (ref && (ref.name === 'face-target' || ref.name === 'frog-target')) {
+      if (!trackerDisabled) {
+        clearTimeout(timer);
+        timer = setTimeout(()=> {
+          tracker.setAttribute('resolution','lg');
+          // Keep tracker enabled for dual target support
+          console.log(`Target ${ref.name} anchored - tracker remains active for dual targets`);
+        }, 1000);
+      }
     }
   });
 })();
