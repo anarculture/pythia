@@ -151,7 +151,7 @@
             left: 0;
             width: 100vw;
             height: 100vh;
-            z-index: 2000;
+            z-index: 8000;
             pointer-events: none;
             font-family: 'Courier New', monospace;
         }
@@ -169,7 +169,7 @@
             font-weight: 600;
             border-radius: 20px;
             cursor: pointer;
-            z-index: 4500;
+            z-index: 9999;
             text-transform: uppercase;
             letter-spacing: 1px;
             box-shadow: 
@@ -177,6 +177,8 @@
                 inset 0 0 10px rgba(0, 255, 0, 0.2);
             transition: all 0.2s ease;
             display: none;
+            pointer-events: auto;
+            touch-action: manipulation;
         }
 
         #overlay-hide-btn:hover {
@@ -715,29 +717,57 @@
     };
     
     // Initialize after DOM is ready to ensure elements exist
+    let hideButtonBound = false;
+    
     document.addEventListener('DOMContentLoaded', () => {
       console.log('🎬 Initializing SceneManager after DOMContentLoaded...');
       SceneManager.init();
+      
+      // Guard against double-binding
+      if (hideButtonBound) {
+        console.log('🎬 Hide button already bound, skipping');
+        return;
+      }
       
       // Debug: Check if button exists in DOM
       const hideBtn = document.getElementById('overlay-hide-btn');
       console.log('🎬 Hide button found:', !!hideBtn, hideBtn);
       
       if (hideBtn) {
-        // Add click event listener with debug logging
-        hideBtn.addEventListener('click', (event) => {
-          console.log('🎬 CLICK EVENT FIRED!', event);
+        // Handler function to prevent double execution
+        let isHandling = false;
+        const handleHideClick = (event) => {
+          if (isHandling) {
+            console.log('🎬 Already handling click, ignoring');
+            return;
+          }
+          isHandling = true;
+          
+          console.log('🎬 HIDE EVENT FIRED!', event.type, event);
           event.preventDefault();
           event.stopPropagation();
+          
           SceneManager.onHideClicked();
-        });
-        console.log('🎬 Hide button click handler bound successfully');
+          
+          // Reset handling flag after execution
+          setTimeout(() => { isHandling = false; }, 100);
+        };
+        
+        // Add both click and touchend for mobile reliability
+        hideBtn.addEventListener('click', handleHideClick);
+        hideBtn.addEventListener('touchend', handleHideClick);
+        
+        hideButtonBound = true;
+        console.log('🎬 Hide button handlers bound (click + touchend)');
         
         // Test button is clickable
+        const computedStyle = getComputedStyle(hideBtn);
         console.log('🎬 Button styles:', {
           display: hideBtn.style.display,
-          pointerEvents: getComputedStyle(hideBtn).pointerEvents,
-          zIndex: getComputedStyle(hideBtn).zIndex
+          pointerEvents: computedStyle.pointerEvents,
+          zIndex: computedStyle.zIndex,
+          position: computedStyle.position,
+          touchAction: computedStyle.touchAction
         });
       } else {
         console.error('🎬 CRITICAL: Hide button not found in DOM!');
