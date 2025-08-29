@@ -645,6 +645,7 @@
       
       
       onHideClicked() {
+        console.log('🎬 HIDE BUTTON CLICKED - HANDLER EXECUTING!');
         console.log('🎬 Hide button clicked - triggering target lost behavior');
         
         // Hide the hide button first
@@ -717,12 +718,29 @@
     document.addEventListener('DOMContentLoaded', () => {
       console.log('🎬 Initializing SceneManager after DOMContentLoaded...');
       SceneManager.init();
+      
+      // Debug: Check if button exists in DOM
       const hideBtn = document.getElementById('overlay-hide-btn');
+      console.log('🎬 Hide button found:', !!hideBtn, hideBtn);
+      
       if (hideBtn) {
-        hideBtn.addEventListener('click', () => SceneManager.onHideClicked());
-        console.log('🎬 Hide button click handler bound');
+        // Add click event listener with debug logging
+        hideBtn.addEventListener('click', (event) => {
+          console.log('🎬 CLICK EVENT FIRED!', event);
+          event.preventDefault();
+          event.stopPropagation();
+          SceneManager.onHideClicked();
+        });
+        console.log('🎬 Hide button click handler bound successfully');
+        
+        // Test button is clickable
+        console.log('🎬 Button styles:', {
+          display: hideBtn.style.display,
+          pointerEvents: getComputedStyle(hideBtn).pointerEvents,
+          zIndex: getComputedStyle(hideBtn).zIndex
+        });
       } else {
-        console.warn('🎬 Hide button not found at init; will be shown later when available.');
+        console.error('🎬 CRITICAL: Hide button not found in DOM!');
       }
     });
 </script>
