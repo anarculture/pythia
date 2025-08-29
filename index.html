@@ -437,11 +437,13 @@
 </head>
 
 <body>
+
 <script>
     // State Machine-Based Scene Management System
     const TARGET_TO_SCENE = {
       'face-target': 'face-scene',
-      'frog-target': 'frog-scene'
+      'frog-target': 'frog-scene',
+      'new-target': 'new-scene'
     };
 
     const AppState = {
@@ -458,150 +460,8 @@
         // Cache scene elements
         this.scenes = {
           'face-scene': document.getElementById('face-scene'),
-          'frog-scene': document.getElementById('frog-scene')
-        };
-        
-        // Initialize all scenes as hidden with hide buttons
-        Object.values(this.scenes).forEach(scene => {
-          if (scene) {
-            this.setVisible(scene, false);
-            this.ensureHideButtonWired(scene);
-          }
-        });
-        
-        // Setup event listeners
-        document.addEventListener('artargetfound', this.onTargetFound.bind(this));
-        
-        console.log('🎬 Scene Manager initialized in SCANNING state');
-      },
-      
-      onTargetFound(event) {
-        if (this.state !== AppState.SCANNING) {
-          console.log('🎯 Target found but already SHOWING - ignoring');
-          return; // Idempotent: ignore when already showing
-        }
-        
-        const name = event.detail && event.detail.name;
-        const sceneId = TARGET_TO_SCENE[name];
-        
-        if (!sceneId) {
-          console.warn(`🎯 Unknown target: ${name}`);
-          return;
-        }
-        
-        console.log(`🎯 Target found: ${name} → ${sceneId}`);
-        this.showScene(sceneId);
-        this.state = AppState.SHOWING;
-      },
-      
-      showScene(sceneId) {
-        this.hideAllScenes();
-        
-        const el = this.scenes[sceneId];
-        if (!el) {
-          console.error(`🎬 Scene not found: ${sceneId}`);
-          return;
-        }
-        
-        this.setVisible(el, true);
-        this.currentSceneId = sceneId;
-        
-        // Show hide button after a brief delay to ensure model is ready
-        setTimeout(() => {
-          const btn = this.getHideButton(el);
-          if (btn) this.setVisible(btn, true);
-        }, 500);
-        
-        console.log(`🎬 Showing scene: ${sceneId}`);
-      },
-      
-      hideAllScenes() {
-        Object.entries(this.scenes).forEach(([id, el]) => {
-          if (el) {
-            this.setVisible(el, false);
-            const btn = this.getHideButton(el);
-            if (btn) this.setVisible(btn, false);
-          }
-        });
-        this.currentSceneId = null;
-      },
-      
-      onHideClicked() {
-        if (this.state !== AppState.SHOWING) return;
-        
-        console.log('🎬 Hide button clicked - returning to SCANNING');
-        this.hideAllScenes();
-        this.state = AppState.SCANNING;
-      },
-      
-      ensureHideButtonWired(sceneEl) {
-        let btn = this.getHideButton(sceneEl);
-        if (!btn) {
-          btn = this.create3DHideButton(sceneEl);
-        }
-        
-        // Mark clickable for raycaster
-        btn.classList.add('ui-clickable');
-        btn.addEventListener('click', this.onHideClicked.bind(this));
-      },
-      
-      getHideButton(sceneEl) {
-        return sceneEl.querySelector('.hide-button');
-      },
-      
-      create3DHideButton(sceneEl) {
-        const btn = document.createElement('a-entity');
-        btn.setAttribute('class', 'hide-button ui-clickable');
-        btn.setAttribute('geometry', 'primitive: plane; width: 0.3; height: 0.1');
-        btn.setAttribute('material', 'color: #ff4444; transparent: true; opacity: 0.8');
-        btn.setAttribute('text', 'value: HIDE; align: center; color: white; wrapCount: 8');
-        btn.setAttribute('position', '0 -0.3 0'); // Position below the model
-        btn.setAttribute('visible', 'false');
-        
-        sceneEl.appendChild(btn);
-        console.log(`🎬 Created hide button for scene: ${sceneEl.id}`);
-        return btn;
-      },
-      
-      setVisible(el, bool) {
-        if (el) el.setAttribute('visible', bool);
-      }
-    };
-
-    // Initialize when DOM is ready
-    document.addEventListener('DOMContentLoaded', () => {
-      // Wait for A-Frame to be ready
-      const scene = document.querySelector('a-scene');
-      if (scene.hasLoaded) {
-        SceneManager.init();
-      } else {
-        scene.addEventListener('loaded', () => SceneManager.init());
-      }
-    });
-</script>
-
-<script>
-    // State Machine-Based Scene Management System
-    const TARGET_TO_SCENE = {
-      'face-target': 'face-scene',
-      'frog-target': 'frog-scene'
-    };
-
-    const AppState = {
-      SCANNING: 'SCANNING',
-      SHOWING: 'SHOWING'
-    };
-
-    const SceneManager = {
-      state: AppState.SCANNING,
-      currentSceneId: null,
-      scenes: {},
-      
-      init() {
-        // Cache scene elements
-        this.scenes = {
-          'face-scene': document.getElementById('face-scene'),
-          'frog-scene': document.getElementById('frog-scene')
+          'frog-scene': document.getElementById('frog-scene'),
+          'new-scene': document.getElementById('new-scene')
         };
         
         // Initialize all scenes as hidden with hide buttons
