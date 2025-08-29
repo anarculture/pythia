@@ -501,6 +501,34 @@
 <body>
 
 <script>
+    // ===== SINGLE SOURCE OF TRUTH: MODEL POSE CONFIGURATIONS =====
+    // 
+    // ⚠️  CRITICAL: This is the ONLY place to define model poses for HUD clones.
+    // ⚠️  Changes here will immediately affect the visible models.
+    // ⚠️  DO NOT set poses anywhere else - they will be overridden by this config.
+    //
+    // 🎯 USAGE: To adjust frog size/position, edit the 'frog-scene' values below.
+    //          The HUD clone will always use these exact values.
+    //
+    // 🔒 PROTECTION: HUD clones are wrapped in containers and stripped of competing
+    //               transform components (smooth-pose, conflicting animations).
+    //
+    // 🔄 LIFECYCLE: Applied fresh on every scan→show cycle, no drift or overrides.
+    //
+    const MODEL_POSE_CONFIG = {
+      'face-scene': {
+        position: { x: 0, y: -0.5, z: -2 },
+        scale: { x: 0.8, y: 0.8, z: 0.8 },
+        rotation: { x: 0, y: 0, z: 0 }
+      },
+      'frog-scene': {
+        // 🐸 FROG POSE TUNING KNOB - Edit these values to adjust visible frog
+        position: { x: 0, y: -0.7, z: -2.2 },  // Camera-relative position (slightly closer & higher)
+        scale: { x: 1.0, y: 1.0, z: 1.0 },     // Size multiplier (normalized size)
+        rotation: { x: 0, y: 15, z: 0 }         // Euler angles (slight Y rotation for testing)
+      }
+    };
+
     // State Machine-Based Scene Management System
     const TARGET_TO_SCENE = {
       'face-target': 'face-scene',
@@ -606,23 +634,56 @@
           return;
         }
         
-        // Remove competing transform components from model
-        modelElement.removeAttribute('smooth-pose');
+        // Clone the model to avoid disrupting the original
+        const hudModel = modelElement.cloneNode(true);
+        hudModel.id = `hud-${modelElement.id}`;
         
-        // Clear any inherited transform attributes that could interfere
-        modelElement.removeAttribute('animation');
-        modelElement.removeAttribute('animation-mixer');
+        // CRITICAL: Remove any competing transform components from HUD clone
+        // These would override our canonical pose configuration
+        hudModel.removeAttribute('smooth-pose');
+        hudModel.removeAttribute('animation');
+        hudModel.removeAttribute('animation-mixer'); // Keep animations but not transforms
         
-        // Set fixed pose in camera space - SINGLE SOURCE OF TRUTH FOR POSITIONING
-        if (sceneId === 'face-scene') {
-          modelElement.setAttribute('position', '0 -0.5 -2');
-          modelElement.setAttribute('scale', '0.8 0.8 0.8');
-        } else if (sceneId === 'frog-scene') {
-          // Optimized frog pose from memory file debugging
-          modelElement.setAttribute('position', '0 -1.2 -2.5');
-          modelElement.setAttribute('scale', '0.8 0.8 0.8');
+        // Re-add only the animation-mixer for model animations (not transforms)
+        if (sceneId === 'frog-scene') {
+          hudModel.setAttribute('animation-mixer', 'clip: *');
+        } else if (sceneId === 'face-scene') {
+          // Face model keeps its rotation animation
+          hudModel.setAttribute('animation', 'property: rotation; to: 0 360 0; loop: true; dur: 5000');
         }
-        modelElement.setAttribute('rotation', '0 0 0');
+        
+        // Handle GLB root offsets by wrapping model in a container
+        // This ensures our canonical pose is applied to the container, not affected by GLB pivot points
+        const hudContainer = document.createElement('a-entity');
+        hudContainer.id = `hud-container-${modelElement.id}`;
+        
+        // Reset model to origin within container (neutralize GLB offsets)
+        hudModel.setAttribute('position', '0 0 0');
+        hudModel.setAttribute('scale', '1 1 1');
+        hudModel.setAttribute('rotation', '0 0 0');
+        
+        // Apply canonical pose to CONTAINER (single source of truth)
+        const poseConfig = MODEL_POSE_CONFIG[sceneId];
+        if (poseConfig) {
+          const pos = poseConfig.position;
+          const scale = poseConfig.scale;
+          const rot = poseConfig.rotation;
+          
+          hudContainer.setAttribute('position', `${pos.x} ${pos.y} ${pos.z}`);
+          hudContainer.setAttribute('scale', `${scale.x} ${scale.y} ${scale.z}`);
+          hudContainer.setAttribute('rotation', `${rot.x} ${rot.y} ${rot.z}`);
+          
+          console.log(`🎯 Applied canonical pose to ${sceneId} HUD container:`, {
+            position: `${pos.x} ${pos.y} ${pos.z}`,
+            scale: `${scale.x} ${scale.y} ${scale.z}`,
+            rotation: `${rot.x} ${rot.y} ${rot.z}`
+          });
+        } else {
+          console.warn(`⚠️ No pose config found for ${sceneId}`);
+        }
+        
+        // Nest model inside container
+        hudContainer.appendChild(hudModel);
         
         // Add lighting for the HUD model
         const ambientLight = document.createElement('a-light');
@@ -636,16 +697,16 @@
         directionalLight.setAttribute('color', '#ffffff');
         directionalLight.setAttribute('intensity', '3.0');
         
-        // Reparent model to HUD root
-        hudRoot.appendChild(modelElement);
+        // Append container (with nested model) to HUD root
+        hudRoot.appendChild(hudContainer);
         hudRoot.appendChild(ambientLight);
         hudRoot.appendChild(directionalLight);
         
         // Track current HUD model
-        this.currentHudModel = modelElement;
+        this.currentHudModel = hudModel;
         this.currentSceneId = sceneId;
         
-        console.log(`🎬 Model ${modelElement.id} reparented to HUD with direct attribute modification`);
+        console.log(`🎬 Model ${modelElement.id} reparented to HUD at fixed position`);
       },
       
       
@@ -977,7 +1038,9 @@
         const faceModel = document.getElementById('face-model');
         
         if (moonwalkModel) {
-          console.log('Moonwalk model found - positioning handled by HUD only');
+          moonwalkModel.object3D.position.set(0, -1.2, 0);
+          moonwalkModel.object3D.scale.set(0.8, 0.8, 0.8);
+          console.log('Fixed moonwalk model positioning');
         }
         
         if (faceModel) {
@@ -1197,8 +1260,7 @@
 
 
     <!-- A-Frame AR Scene -->
-    <a-scene encantar="stats: false; gizmos: false" device-orientation-permission-ui="enabled: false" background="transparent: true">
-        
+    <a-scene encantar="stats: false; gizmos: false" device-orientation-permission-ui="enabled: false" background="transparent: true">          
         <!-- Asset preloading -->
         <a-assets>
             <a-asset-item id="face-model-asset" src="base_basic_shaded.glb"></a-asset-item>
@@ -1354,14 +1416,16 @@
             <a-entity id="frog-smoothed" smooth-pose="pos:0.18; rot:0.18; scale:0.22">
               <a-gltf-model id="moonwalk-model"
                             src="#moonwalk-model-asset"
+                            position="0 -1.2 0"
+                            scale="0.8 0.8 0.8"
                             animation-mixer="clip: *"
                             shadow="cast: true; receive: true">
               </a-gltf-model>
 
-              <a-light type="ambient" color="#ffffff" intensity="1.8"></a-light>
+              <a-light type="ambient" color="#ffffff" intensity="2.51"></a-light>
               <a-light type="directional" position="2 4 2" color="#ffffff" intensity="3.14" shadow="cast: true"></a-light>
-              <a-light type="point" position="-1 2 1" color="#4CAF50" intensity="20" decay="2"></a-light>
-              <a-light type="point" position="1 2 1" color="#2196F3" intensity="20" decay="2"></a-light>
+              <a-light type="point" position="-1 2 1" color="#4CAF50" intensity="30" decay="2"></a-light>
+              <a-light type="point" position="1 2 1" color="#2196F3" intensity="30" decay="2"></a-light>
             </a-entity>
         </ar-root>
 
