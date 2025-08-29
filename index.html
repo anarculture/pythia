@@ -713,20 +713,18 @@
       
     };
     
-    // Initialize immediately - no waiting
-    setTimeout(() => {
-      console.log('🎬 Force initializing SceneManager now...');
+    // Initialize after DOM is ready to ensure elements exist
+    document.addEventListener('DOMContentLoaded', () => {
+      console.log('🎬 Initializing SceneManager after DOMContentLoaded...');
       SceneManager.init();
-      
-      // Bind Hide button click handler (no inline onclick)
       const hideBtn = document.getElementById('overlay-hide-btn');
       if (hideBtn) {
-        hideBtn.addEventListener('click', () => {
-          SceneManager.onHideClicked();
-        });
+        hideBtn.addEventListener('click', () => SceneManager.onHideClicked());
         console.log('🎬 Hide button click handler bound');
+      } else {
+        console.warn('🎬 Hide button not found at init; will be shown later when available.');
       }
-    }, 1000);
+    });
 </script>
 
 <script>
