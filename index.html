@@ -586,9 +586,28 @@
       onHideClicked() {
         if (this.state !== AppState.SHOWING) return;
         
-        console.log('🎬 Hide button clicked - returning to SCANNING');
+        console.log('🎬 Hide button clicked - returning to SCANNING mode');
         this.hideAllScenes();
+        this.returnToScanning();
+      },
+      
+      returnToScanning() {
         this.state = AppState.SCANNING;
+        
+        // Show aim overlay for scanning
+        const aimOverlay = document.getElementById('aim-overlay');
+        if (aimOverlay) {
+          aimOverlay.style.display = 'block';
+          aimOverlay.style.opacity = '1';
+          aimOverlay.classList.remove('hidden');
+        }
+        
+        // Reset model anchored state
+        if (window.ARtedita && window.ARtedita.state) {
+          window.ARtedita.state.modelAnchored = false;
+        }
+        
+        console.log('🎬 Returned to SCANNING mode - ready to detect new targets');
       },
       
       showOverlayHideButton() {
