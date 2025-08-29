@@ -442,8 +442,7 @@
     // State Machine-Based Scene Management System
     const TARGET_TO_SCENE = {
       'face-target': 'face-scene',
-      'frog-target': 'frog-scene',
-      'new-target': 'new-scene'
+      'frog-target': 'frog-scene'
     };
 
     const AppState = {
@@ -460,8 +459,7 @@
         // Cache scene elements
         this.scenes = {
           'face-scene': document.getElementById('face-scene'),
-          'frog-scene': document.getElementById('frog-scene'),
-          'new-scene': document.getElementById('new-scene')
+          'frog-scene': document.getElementById('frog-scene')
         };
         
         // Initialize all scenes as hidden with hide buttons
