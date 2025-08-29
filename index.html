@@ -567,11 +567,13 @@
         this.setVisible(el, true);
         this.currentSceneId = sceneId;
         
+        
         // Show overlay hide button
         this.showOverlayHideButton();
         
         console.log(`🎬 Showing persistent scene: ${sceneId} - will not auto-hide on target lost`);
       },
+      
       
       hideAllScenes() {
         Object.entries(this.scenes).forEach(([id, el]) => {
@@ -586,28 +588,42 @@
       onHideClicked() {
         if (this.state !== AppState.SHOWING) return;
         
-        console.log('🎬 Hide button clicked - returning to SCANNING mode');
-        this.hideAllScenes();
-        this.returnToScanning();
+        console.log('🎬 Hide button clicked - triggering target lost behavior');
+        this.triggerTargetLostBehavior();
       },
       
-      returnToScanning() {
-        this.state = AppState.SCANNING;
+      triggerTargetLostBehavior() {
+        // Hide all scenes first
+        this.hideAllScenes();
         
-        // Show aim overlay for scanning
+        // Execute the same logic as artargetlost event
         const aimOverlay = document.getElementById('aim-overlay');
+        const targetIndicator = document.getElementById('target-indicator');
+        
+        // Hide target indicator
+        if (targetIndicator) {
+          targetIndicator.style.display = 'none';
+        }
+        
+        // Show aim overlay again for scanning
         if (aimOverlay) {
           aimOverlay.style.display = 'block';
           aimOverlay.style.opacity = '1';
           aimOverlay.classList.remove('hidden');
         }
         
-        // Reset model anchored state
+        // Reset model anchored state and return to scanning
         if (window.ARtedita && window.ARtedita.state) {
           window.ARtedita.state.modelAnchored = false;
         }
         
-        console.log('🎬 Returned to SCANNING mode - ready to detect new targets');
+        // Call playOverlay to resume scanning animation
+        if (typeof playOverlay === 'function') {
+          playOverlay();
+        }
+        
+        this.state = AppState.SCANNING;
+        console.log('🎬 Target lost behavior triggered - returned to SCANNING mode');
       },
       
       showOverlayHideButton() {
