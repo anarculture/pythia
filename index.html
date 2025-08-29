@@ -482,7 +482,7 @@
           return; // Idempotent: ignore when already showing
         }
         
-        const name = event.detail && event.detail.name;
+        const name = event.detail && (event.detail.name || (event.detail.referenceImage && event.detail.referenceImage.name));
         const sceneId = TARGET_TO_SCENE[name];
         
         if (!sceneId) {
@@ -1180,9 +1180,13 @@
 <!-- Pose smoothing component -->
 <script>
 AFRAME.registerComponent('smooth-pose', {
-  schema: { pos:{default:0.18}, rot:{default:0.18}, scale:{default:0.22} },
-  init(){ this.p=new THREE.Vector3(); this.q=new THREE.Quaternion(); this.s=new THREE.Vector3(); },
-  tick(){
+  schema: { pos: {default: 0.18}, rot: {default: 0.18}, scale: {default: 0.22} },
+  init() { 
+    this.p = new THREE.Vector3(); 
+    this.q = new THREE.Quaternion(); 
+    this.s = new THREE.Vector3(); 
+  },
+  tick() {
     const child = this.el.object3D;
     const parent = this.el.parentEl && this.el.parentEl.object3D;
     if (!parent) return;
