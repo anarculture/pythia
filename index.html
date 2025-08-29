@@ -559,13 +559,9 @@
           // Show hide button
           this.showOverlayHideButton();
           
-          // Update target indicator
-          const targetIndicator = document.getElementById('target-indicator');
-          const targetName = document.getElementById('target-name');
-          if (targetIndicator && targetName) {
-            targetName.textContent = ref.name === 'face-target' ? 'Face Model' : 'Moonwalk Animation';
-            targetIndicator.style.display = 'block';
-          }
+          // Debug log target detection (removed visible UI)
+          const targetDisplayName = ref.name === 'face-target' ? 'Face Model' : 'Moonwalk Animation';
+          console.debug('🎯 Target detected for display:', targetDisplayName);
           
           // Hide aim overlay
           const aimOverlay = document.getElementById('aim-overlay');
@@ -667,11 +663,8 @@
           }
         }
         
-        // Hide target indicator
-        const targetIndicator = document.getElementById('target-indicator');
-        if (targetIndicator) {
-          targetIndicator.style.display = 'none';
-        }
+        // Debug log target hiding (removed visible UI)
+        console.debug('🎯 Target indicator hidden (UI removed)');
         
         // Update state to SCANNING
         this.state = AppState.SCANNING;
@@ -701,23 +694,7 @@
         console.log('🎬 HUD model removed - returned to SCANNING mode');
       },
       
-      showOverlayHideButton() {
-        const hideBtn = document.getElementById('overlay-hide-btn');
-        if (hideBtn) {
-          hideBtn.style.display = 'block';
-        }
-      },
-      
-      hideOverlayHideButton() {
-        const hideBtn = document.getElementById('overlay-hide-btn');
-        if (hideBtn) {
-          hideBtn.style.display = 'none';
-        }
-      }
     };
-
-    // Immediate test to verify script execution
-    console.log('🎬 SceneManager script block is executing!');
     
     // Initialize immediately - no waiting
     setTimeout(() => {
@@ -1143,24 +1120,6 @@
 
 
 
-    <!-- Target Detection Indicator -->
-    <div id="target-indicator" style="
-        position: fixed;
-        top: 60px;
-        left: 50%;
-        transform: translateX(-50%);
-        background: rgba(0, 255, 0, 0.9);
-        color: #000;
-        padding: 8px 16px;
-        border-radius: 15px;
-        font-size: 12px;
-        font-weight: 600;
-        z-index: 4600;
-        display: none;
-        font-family: 'Courier New', monospace;
-    ">
-        Target: <span id="target-name">None</span>
-    </div>
 
 
     <!-- A-Frame AR Scene -->
