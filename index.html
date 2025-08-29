@@ -160,22 +160,23 @@
             position: fixed;
             bottom: 30px;
             right: 30px;
-            background: #00ff00;
+            background: rgba(0, 255, 0, 0.9);
             color: #000;
             border: 2px solid #00ff00;
             padding: 12px 24px;
             font-family: 'Courier New', monospace;
-            font-weight: bold;
             font-size: 14px;
-            text-transform: uppercase;
+            font-weight: 600;
+            border-radius: 20px;
             cursor: pointer;
-            pointer-events: auto;
-            display: none;
+            z-index: 4500;
+            text-transform: uppercase;
+            letter-spacing: 1px;
             box-shadow: 
-                0 0 10px #00ff00,
+                0 0 10px rgba(0, 255, 0, 0.5),
                 inset 0 0 10px rgba(0, 255, 0, 0.2);
-            animation: crtGlow 2s ease-in-out infinite alternate;
             transition: all 0.2s ease;
+            display: none;
         }
 
         #overlay-hide-btn:hover {
@@ -694,12 +695,37 @@
         console.log('🎬 HUD model removed - returned to SCANNING mode');
       },
       
+      showOverlayHideButton() {
+        const hideBtn = document.getElementById('overlay-hide-btn');
+        if (hideBtn) {
+          hideBtn.style.display = 'block';
+          console.log('🎬 Hide button shown');
+        }
+      },
+      
+      hideOverlayHideButton() {
+        const hideBtn = document.getElementById('overlay-hide-btn');
+        if (hideBtn) {
+          hideBtn.style.display = 'none';
+          console.log('🎬 Hide button hidden');
+        }
+      }
+      
     };
     
     // Initialize immediately - no waiting
     setTimeout(() => {
       console.log('🎬 Force initializing SceneManager now...');
       SceneManager.init();
+      
+      // Bind Hide button click handler (no inline onclick)
+      const hideBtn = document.getElementById('overlay-hide-btn');
+      if (hideBtn) {
+        hideBtn.addEventListener('click', () => {
+          SceneManager.onHideClicked();
+        });
+        console.log('🎬 Hide button click handler bound');
+      }
     }, 1000);
 </script>
 
@@ -1297,7 +1323,7 @@
 
     <!-- CRT-style overlay UI -->
     <div id="crt-overlay">
-        <button id="overlay-hide-btn" onclick="SceneManager.onHideClicked()">
+        <button id="overlay-hide-btn">
             [ HIDE ]
         </button>
     </div>
