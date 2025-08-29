@@ -800,79 +800,149 @@
     
     ARtedita.processLoadingStep();
     
-    // Real AR system loading detection
-    ARtedita.waitForARReady = () => {
-      console.log('Waiting for AR system to be fully ready...');
-      
-      // Check if A-Frame scene is loaded
-      const checkARReady = () => {
-        const scene = document.querySelector('a-scene');
-        if (!scene) {
-          console.log('A-Frame scene not found, waiting...');
-          setTimeout(checkARReady, 100);
-          return;
-        }
-        
-        // Wait for scene to be loaded
-        if (!scene.hasLoaded) {
-          console.log('A-Frame scene not loaded yet, waiting...');
-          scene.addEventListener('loaded', () => {
-            console.log('A-Frame scene loaded, checking AR components...');
-            ARtedita.checkARComponents();
-          });
-          return;
-        }
-        
-        console.log('A-Frame scene already loaded, checking AR components...');
-        ARtedita.checkARComponents();
-      };
-      
-      setTimeout(checkARReady, 1000); // Give time for scene to initialize
+    // Truthful loader - wait for all real readiness conditions
+    ARtedita.readinessChecks = {
+      sceneLoaded: false,
+      assetsLoaded: false,
+      cameraReady: false,
+      arSessionReady: false
     };
     
-    ARtedita.checkARComponents = () => {
-      const scene = document.querySelector('a-scene');
-      const arCamera = document.querySelector('ar-camera-source');
-      const arTracker = document.querySelector('ar-image-tracker');
+    ARtedita.checkAllReady = () => {
+      const { sceneLoaded, assetsLoaded, cameraReady, arSessionReady } = ARtedita.readinessChecks;
+      console.log('Readiness status:', ARtedita.readinessChecks);
       
-      console.log('Checking AR components:', {
-        scene: !!scene,
-        camera: !!arCamera,
-        tracker: !!arTracker
-      });
-      
-      // Only listen for AR ready events - no timeout fallback
-      scene.addEventListener('arready', () => {
-        console.log('AR ready event received!');
-        
-        // Fix position/scale corruption
-        setTimeout(() => {
-          const moonwalkModel = document.getElementById('moonwalk-model');
-          const faceModel = document.getElementById('face-model');
-          
-          if (moonwalkModel) {
-            moonwalkModel.object3D.position.set(0, -1.2, 0);
-            moonwalkModel.object3D.scale.set(0.8, 0.8, 0.8);
-            console.log('Fixed moonwalk model positioning');
-          }
-          
-          if (faceModel) {
-            faceModel.object3D.position.set(0, -1, 0);
-            faceModel.object3D.scale.set(1, 1, 1);
-            console.log('Fixed face model positioning');
-          }
-        }, 500);
-        
+      if (sceneLoaded && assetsLoaded && cameraReady && arSessionReady) {
+        console.log('All systems ready - hiding loader');
         if (!ARtedita.state.loaderHidden) {
           ARtedita.state.loaderHidden = true;
           ARtedita.hideLoaderAndShowOnboarding();
         }
-      });
+      }
+    };
+    
+    ARtedita.waitForARReady = () => {
+      console.log('Waiting for all AR system components to be ready...');
+      
+      // 1. Check A-Frame scene loading
+      const checkSceneReady = () => {
+        const scene = document.querySelector('a-scene');
+        if (!scene) {
+          console.log('A-Frame scene not found, waiting...');
+          setTimeout(checkSceneReady, 100);
+          return;
+        }
+        
+        if (!scene.hasLoaded) {
+          console.log('A-Frame scene not loaded yet, waiting...');
+          scene.addEventListener('loaded', () => {
+            console.log('✓ A-Frame scene loaded');
+            ARtedita.readinessChecks.sceneLoaded = true;
+            ARtedita.checkAllReady();
+          });
+        } else {
+          console.log('✓ A-Frame scene already loaded');
+          ARtedita.readinessChecks.sceneLoaded = true;
+          ARtedita.checkAllReady();
+        }
+      };
+      
+      // 2. Check asset loading
+      const checkAssetsReady = () => {
+        const assets = document.querySelector('a-assets');
+        if (assets) {
+          if (assets.hasLoaded) {
+            console.log('✓ Assets already loaded');
+            ARtedita.readinessChecks.assetsLoaded = true;
+            ARtedita.checkAllReady();
+          } else {
+            assets.addEventListener('loaded', () => {
+              console.log('✓ Assets loaded');
+              ARtedita.readinessChecks.assetsLoaded = true;
+              ARtedita.checkAllReady();
+            });
+          }
+        } else {
+          // No assets element, consider ready
+          console.log('✓ No assets to load');
+          ARtedita.readinessChecks.assetsLoaded = true;
+          ARtedita.checkAllReady();
+        }
+      };
+      
+      // 3. Check camera stream ready
+      const checkCameraReady = () => {
+        const arCamera = document.querySelector('ar-camera-source');
+        if (arCamera) {
+          // Listen for camera stream ready
+          arCamera.addEventListener('loadstart', () => {
+            console.log('✓ Camera stream ready');
+            ARtedita.readinessChecks.cameraReady = true;
+            ARtedita.checkAllReady();
+          });
+          
+          // Fallback: check if camera is already ready
+          setTimeout(() => {
+            if (!ARtedita.readinessChecks.cameraReady) {
+              console.log('✓ Camera ready (fallback)');
+              ARtedita.readinessChecks.cameraReady = true;
+              ARtedita.checkAllReady();
+            }
+          }, 2000);
+        } else {
+          console.log('✓ No AR camera found, skipping');
+          ARtedita.readinessChecks.cameraReady = true;
+          ARtedita.checkAllReady();
+        }
+      };
+      
+      // 4. Check AR session ready (encantar's arready event)
+      const checkARSessionReady = () => {
+        const scene = document.querySelector('a-scene');
+        if (scene) {
+          scene.addEventListener('arready', () => {
+            console.log('✓ AR session ready');
+            ARtedita.readinessChecks.arSessionReady = true;
+            ARtedita.checkAllReady();
+          });
+        }
+      };
+      
+      // Start all checks
+      setTimeout(() => {
+        checkSceneReady();
+        checkAssetsReady();
+        checkCameraReady();
+        checkARSessionReady();
+      }, 1000);
+    };
+    
+    ARtedita.fixModelPositions = () => {
+      // Fix position/scale corruption after AR ready
+      setTimeout(() => {
+        const moonwalkModel = document.getElementById('moonwalk-model');
+        const faceModel = document.getElementById('face-model');
+        
+        if (moonwalkModel) {
+          moonwalkModel.object3D.position.set(0, -1.2, 0);
+          moonwalkModel.object3D.scale.set(0.8, 0.8, 0.8);
+          console.log('Fixed moonwalk model positioning');
+        }
+        
+        if (faceModel) {
+          faceModel.object3D.position.set(0, -1, 0);
+          faceModel.object3D.scale.set(1, 1, 1);
+          console.log('Fixed face model positioning');
+        }
+      }, 500);
     };
     
     ARtedita.hideLoaderAndShowOnboarding = () => {
-      console.log('Hiding loader and showing onboarding');
+      console.log('All systems ready - hiding loader and showing onboarding');
       if (customLoader && customLoader.style.display !== 'none') {
+        // Fix model positions now that AR is ready
+        ARtedita.fixModelPositions();
+        
         customLoader.classList.add('fade-out');
         setTimeout(() => {
           customLoader.style.display = 'none';
