@@ -511,8 +511,9 @@
 
     const SceneManager = {
       state: AppState.SCANNING,
-      currentSceneId: null,
       scenes: {},
+      currentSceneId: null,
+      currentHudModel: null,
       
       init() {
         // Cache scene elements
@@ -521,10 +522,10 @@
           'frog-scene': document.getElementById('frog-scene')
         };
         
-        // Initialize all scenes as hidden
-        Object.values(this.scenes).forEach(scene => {
-          if (scene) {
-            this.setVisible(scene, false);
+        // Validate all scenes exist
+        Object.entries(this.scenes).forEach(([id, el]) => {
+          if (!el) {
+            console.error(`🎬 Scene element not found: ${id}`);
           }
         });
         
@@ -539,12 +540,18 @@
         const ref = ev.detail && ev.detail.referenceImage;
         console.log('🎬 SceneManager - Target found:', ref ? ref.name : 'none');
         
+        // Guard against double spawns - only process if SCANNING
+        if (this.state !== AppState.SCANNING) {
+          console.log('🎬 Already DISPLAYING - ignoring target found');
+          return;
+        }
+        
         if (ref && TARGET_TO_SCENE[ref.name]) {
           const sceneId = TARGET_TO_SCENE[ref.name];
-          console.log(`🎬 Showing scene: ${sceneId} for target: ${ref.name}`);
+          console.log(`🎬 Reparenting model to camera HUD for: ${ref.name}`);
           
-          // Show the corresponding scene
-          this.showScene(sceneId);
+          // Reparent model to camera HUD for true persistence
+          this.reparentModelToHUD(sceneId, ref.name);
           
           // Update state to DISPLAYING
           this.state = AppState.SHOWING;
@@ -568,39 +575,77 @@
             setTimeout(() => aimOverlay.style.display = 'none', 1000);
           }
           
-          // Trigger particle burst for visual feedback
-          if (typeof ARtedita !== 'undefined' && ARtedita.triggerParticleBurst) {
+          // Trigger particle burst once per session
+          if (window.ARtedita && !ARtedita.state.modelAnchored && ARtedita.triggerParticleBurst) {
             ARtedita.triggerParticleBurst();
+            ARtedita.state.modelAnchored = true;
           }
           
-          console.log('🎬 State changed to DISPLAYING, hide button shown');
+          console.log('🎬 Model reparented to HUD - decoupled from marker');
         }
       },
       
-      showScene(sceneId) {
-        this.hideAllScenes();
+      reparentModelToHUD(sceneId, targetName) {
+        const hudRoot = document.getElementById('hud-root');
+        const originalScene = this.scenes[sceneId];
         
-        const el = this.scenes[sceneId];
-        if (!el) {
-          console.error(`🎬 Scene not found: ${sceneId}`);
+        if (!hudRoot || !originalScene) {
+          console.error('🎬 HUD root or original scene not found');
           return;
         }
         
-        // Make scene visible
-        this.setVisible(el, true);
+        // Find the model element within the scene
+        let modelElement;
+        if (sceneId === 'face-scene') {
+          modelElement = originalScene.querySelector('#face-model');
+        } else if (sceneId === 'frog-scene') {
+          modelElement = originalScene.querySelector('#moonwalk-model');
+        }
+        
+        if (!modelElement) {
+          console.error(`🎬 Model element not found in ${sceneId}`);
+          return;
+        }
+        
+        // Clone the model to avoid disrupting the original
+        const hudModel = modelElement.cloneNode(true);
+        hudModel.id = `hud-${modelElement.id}`;
+        
+        // Set fixed pose in camera space
+        if (sceneId === 'face-scene') {
+          hudModel.setAttribute('position', '0 -0.5 -2');
+          hudModel.setAttribute('scale', '0.8 0.8 0.8');
+        } else if (sceneId === 'frog-scene') {
+          hudModel.setAttribute('position', '0 -0.8 -2.5');
+          hudModel.setAttribute('scale', '1.2 1.2 1.2');
+        }
+        hudModel.setAttribute('rotation', '0 0 0');
+        
+        // Add lighting for the HUD model
+        const ambientLight = document.createElement('a-light');
+        ambientLight.setAttribute('type', 'ambient');
+        ambientLight.setAttribute('color', '#ffffff');
+        ambientLight.setAttribute('intensity', '2.5');
+        
+        const directionalLight = document.createElement('a-light');
+        directionalLight.setAttribute('type', 'directional');
+        directionalLight.setAttribute('position', '2 4 2');
+        directionalLight.setAttribute('color', '#ffffff');
+        directionalLight.setAttribute('intensity', '3.0');
+        
+        // Append to HUD root
+        hudRoot.appendChild(hudModel);
+        hudRoot.appendChild(ambientLight);
+        hudRoot.appendChild(directionalLight);
+        
+        // Track current HUD model
+        this.currentHudModel = hudModel;
         this.currentSceneId = sceneId;
+        
+        console.log(`🎬 Model ${modelElement.id} reparented to HUD at fixed position`);
       },
       
       
-      hideAllScenes() {
-        Object.entries(this.scenes).forEach(([id, el]) => {
-          if (el) {
-            this.setVisible(el, false);
-          }
-        });
-        this.hideOverlayHideButton();
-        this.currentSceneId = null;
-      },
       
       onHideClicked() {
         console.log('🎬 Hide button clicked - triggering target lost behavior');
@@ -608,19 +653,31 @@
         // Hide the hide button first
         this.hideOverlayHideButton();
         
-        // Hide all scenes
-        this.hideAllScenes();
-        
-        // Execute the same logic as artargetlost event
-        const aimOverlay = document.getElementById('aim-overlay');
-        const targetIndicator = document.getElementById('target-indicator');
+        // Remove current HUD model and lighting
+        if (this.currentHudModel) {
+          // Remove the model
+          this.currentHudModel.remove();
+          this.currentHudModel = null;
+          
+          // Clear all lighting from HUD root
+          const hudRoot = document.getElementById('hud-root');
+          if (hudRoot) {
+            const lights = hudRoot.querySelectorAll('a-light');
+            lights.forEach(light => light.remove());
+          }
+        }
         
         // Hide target indicator
+        const targetIndicator = document.getElementById('target-indicator');
         if (targetIndicator) {
           targetIndicator.style.display = 'none';
         }
         
+        // Update state to SCANNING
+        this.state = AppState.SCANNING;
+        
         // Show aim overlay again for scanning
+        const aimOverlay = document.getElementById('aim-overlay');
         if (aimOverlay) {
           aimOverlay.style.display = 'block';
           aimOverlay.style.opacity = '1';
@@ -632,13 +689,16 @@
           window.ARtedita.state.modelAnchored = false;
         }
         
-        // Call playOverlay to resume scanning animation
+        // Resume scanning animation
         if (typeof playOverlay === 'function') {
           playOverlay();
         }
         
-        this.state = AppState.SCANNING;
-        console.log('🎬 Target lost behavior triggered - returned to SCANNING mode');
+        // TODO: Add explicit Encantar session restart when method is identified
+        // For now, rely on natural AR session continuation
+        
+        this.currentSceneId = null;
+        console.log('🎬 HUD model removed - returned to SCANNING mode');
       },
       
       showOverlayHideButton() {
@@ -653,10 +713,6 @@
         if (hideBtn) {
           hideBtn.style.display = 'none';
         }
-      },
-      
-      setVisible(el, bool) {
-        if (el) el.setAttribute('visible', bool);
       }
     };
 
@@ -872,38 +928,39 @@
       // Persistent model tracking - anchor after first detection
       let modelAnchored = false;
       
-      scene.addEventListener('artargetfound', (ev) => {
-        console.log('🎯 AR Target Found Event:', ev);
-        const ref = ev.detail && ev.detail.referenceImage;
-        console.log('🎯 Reference image detected:', ref ? ref.name : 'none');
-        
-        if (ref && (ref.name === 'face-target' || ref.name === 'frog-target')) {
-          console.log(`✅ TARGET MATCHED: ${ref.name}`);
-          pauseOverlay();
-          
-          // Update target indicator
-          const targetIndicator = document.getElementById('target-indicator');
-          const targetName = document.getElementById('target-name');
-          if (targetIndicator && targetName) {
-            targetName.textContent = ref.name === 'face-target' ? 'Face Model' : 'Moonwalk Animation';
-            targetIndicator.style.display = 'block';
-          }
-          
-          
-          // Fade out aim overlay smoothly
-          if (aimOverlay) {
-            aimOverlay.style.transition = 'opacity 1s ease-out';
-            aimOverlay.style.opacity = '0';
-            setTimeout(() => aimOverlay.style.display = 'none', 1000);
-          }
-          
-          // Trigger particle burst for visual feedback
-          if (!ARtedita.state.modelAnchored) {
-            ARtedita.triggerParticleBurst();
-            ARtedita.state.modelAnchored = true;
-          }
-        }
-      });
+      // Remove redundant artargetfound handler - SceneManager handles all target detection
+      // scene.addEventListener('artargetfound', (ev) => {
+      //   console.log('🎯 AR Target Found Event:', ev);
+      //   const ref = ev.detail && ev.detail.referenceImage;
+      //   console.log('🎯 Reference image detected:', ref ? ref.name : 'none');
+      //   
+      //   if (ref && (ref.name === 'face-target' || ref.name === 'frog-target')) {
+      //     console.log(`✅ TARGET MATCHED: ${ref.name}`);
+      //     pauseOverlay();
+      //     
+      //     // Update target indicator
+      //     const targetIndicator = document.getElementById('target-indicator');
+      //     const targetName = document.getElementById('target-name');
+      //     if (targetIndicator && targetName) {
+      //       targetName.textContent = ref.name === 'face-target' ? 'Face Model' : 'Moonwalk Animation';
+      //       targetIndicator.style.display = 'block';
+      //     }
+      //     
+      //     
+      //     // Fade out aim overlay smoothly
+      //     if (aimOverlay) {
+      //       aimOverlay.style.transition = 'opacity 1s ease-out';
+      //       aimOverlay.style.opacity = '0';
+      //       setTimeout(() => aimOverlay.style.display = 'none', 1000);
+      //     }
+      //     
+      //     // Trigger particle burst for visual feedback
+      //     if (!ARtedita.state.modelAnchored) {
+      //       ARtedita.triggerParticleBurst();
+      //       ARtedita.state.modelAnchored = true;
+      //     }
+      //   }
+      // });
       
       // Remove the conflicting artargetlost event handler that breaks persistence
       // scene.addEventListener('artargetlost', (ev) => {
@@ -1221,7 +1278,9 @@
     </ar-viewport>
 
     <!-- AR Camera -->
-    <ar-camera></ar-camera>
+    <ar-camera>
+        <a-entity id="hud-root" position="0 0 0"></a-entity>
+    </ar-camera>
 
         <!-- Face Target AR Scene -->
         <ar-root id="face-scene" reference-image="face-target" visible="false">
