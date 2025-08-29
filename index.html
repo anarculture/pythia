@@ -528,8 +528,9 @@
           }
         });
         
-        // Setup event listeners
+        // Setup event listeners for target detection only
         document.addEventListener('artargetfound', this.onTargetFound.bind(this));
+        // Note: Deliberately NOT listening to artargetlost for persistence
         
         console.log('🎬 Scene Manager initialized in SCANNING state');
       },
@@ -548,12 +549,12 @@
           return;
         }
         
-        console.log(`🎯 Target found: ${name} → ${sceneId}`);
-        this.showScene(sceneId);
+        console.log(`🎯 Target found: ${name} → ${sceneId} - PERSISTING MODEL`);
+        this.showScenePersistent(sceneId);
         this.state = AppState.SHOWING;
       },
       
-      showScene(sceneId) {
+      showScenePersistent(sceneId) {
         this.hideAllScenes();
         
         const el = this.scenes[sceneId];
@@ -562,13 +563,14 @@
           return;
         }
         
+        // Make scene persistent - it will stay visible even when target is lost
         this.setVisible(el, true);
         this.currentSceneId = sceneId;
         
         // Show overlay hide button
         this.showOverlayHideButton();
         
-        console.log(`🎬 Showing scene: ${sceneId}`);
+        console.log(`🎬 Showing persistent scene: ${sceneId} - will not auto-hide on target lost`);
       },
       
       hideAllScenes() {
@@ -858,23 +860,19 @@
         const ref = ev.detail && ev.detail.referenceImage;
         
         if (ref && (ref.name === 'face-target' || ref.name === 'frog-target')) {
-          console.log(`❌ TARGET LOST: ${ref.name}`);
+          console.log(`❌ TARGET LOST: ${ref.name} - MODEL PERSISTING (not auto-hiding)`);
           
-          // Hide target indicator
+          // Hide target indicator only
           const targetIndicator = document.getElementById('target-indicator');
           if (targetIndicator) {
             targetIndicator.style.display = 'none';
           }
           
+          // DO NOT show aim overlay again - model should persist
+          // DO NOT call playOverlay() - model should stay visible
+          // DO NOT reset modelAnchored - model remains anchored
           
-          // Show aim overlay again
-          if (aimOverlay) {
-            aimOverlay.style.display = 'block';
-            aimOverlay.style.opacity = '1';
-          }
-          
-          playOverlay();
-          ARtedita.state.modelAnchored = false;
+          console.log('🎬 Model persistence: Scene remains visible despite target lost');
         }
       });
       
