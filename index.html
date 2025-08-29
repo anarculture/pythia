@@ -608,16 +608,14 @@
       }
     };
 
-    // Initialize when DOM is ready
-    document.addEventListener('DOMContentLoaded', () => {
-      // Wait for A-Frame to be ready
-      const scene = document.querySelector('a-scene');
-      if (scene.hasLoaded) {
-        SceneManager.init();
-      } else {
-        scene.addEventListener('loaded', () => SceneManager.init());
-      }
-    });
+    // Immediate test to verify script execution
+    console.log('🎬 SceneManager script block is executing!');
+    
+    // Initialize immediately - no waiting
+    setTimeout(() => {
+      console.log('🎬 Force initializing SceneManager now...');
+      SceneManager.init();
+    }, 1000);
 </script>
 
 <script>
@@ -1046,7 +1044,7 @@
 
 
     <!-- A-Frame AR Scene -->
-    <a-scene encantar="stats: false; gizmos: false" device-orientation-permission-ui="enabled: false" background="color: transparent">
+    <a-scene encantar="stats: false; gizmos: false" device-orientation-permission-ui="enabled: false" background="color: #000000; transparent: true">
         
         <!-- Asset preloading -->
         <a-assets>
