@@ -143,6 +143,65 @@
                 padding: 12px 24px;
             }
         }
+
+        /* CRT-style overlay UI */
+        #crt-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 2000;
+            pointer-events: none;
+            font-family: 'Courier New', monospace;
+        }
+
+        #overlay-hide-btn {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: #00ff00;
+            color: #000;
+            border: 2px solid #00ff00;
+            padding: 12px 24px;
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            font-size: 14px;
+            text-transform: uppercase;
+            cursor: pointer;
+            pointer-events: auto;
+            display: none;
+            box-shadow: 
+                0 0 10px #00ff00,
+                inset 0 0 10px rgba(0, 255, 0, 0.2);
+            animation: crtGlow 2s ease-in-out infinite alternate;
+            transition: all 0.2s ease;
+        }
+
+        #overlay-hide-btn:hover {
+            background: #000;
+            color: #00ff00;
+            box-shadow: 
+                0 0 20px #00ff00,
+                inset 0 0 20px rgba(0, 255, 0, 0.3);
+        }
+
+        #overlay-hide-btn:active {
+            transform: scale(0.95);
+        }
+
+        @keyframes crtGlow {
+            0% { 
+                box-shadow: 
+                    0 0 5px #00ff00,
+                    inset 0 0 5px rgba(0, 255, 0, 0.2);
+            }
+            100% { 
+                box-shadow: 
+                    0 0 15px #00ff00,
+                    inset 0 0 15px rgba(0, 255, 0, 0.3);
+            }
+        }
         
         
         /* Particle burst animation for model unlock */
@@ -462,11 +521,10 @@
           'frog-scene': document.getElementById('frog-scene')
         };
         
-        // Initialize all scenes as hidden with hide buttons
+        // Initialize all scenes as hidden
         Object.values(this.scenes).forEach(scene => {
           if (scene) {
             this.setVisible(scene, false);
-            this.ensureHideButtonWired(scene);
           }
         });
         
@@ -507,11 +565,8 @@
         this.setVisible(el, true);
         this.currentSceneId = sceneId;
         
-        // Show hide button after a brief delay to ensure model is ready
-        setTimeout(() => {
-          const btn = this.getHideButton(el);
-          if (btn) this.setVisible(btn, true);
-        }, 500);
+        // Show overlay hide button
+        this.showOverlayHideButton();
         
         console.log(`🎬 Showing scene: ${sceneId}`);
       },
@@ -520,10 +575,9 @@
         Object.entries(this.scenes).forEach(([id, el]) => {
           if (el) {
             this.setVisible(el, false);
-            const btn = this.getHideButton(el);
-            if (btn) this.setVisible(btn, false);
           }
         });
+        this.hideOverlayHideButton();
         this.currentSceneId = null;
       },
       
@@ -535,33 +589,18 @@
         this.state = AppState.SCANNING;
       },
       
-      ensureHideButtonWired(sceneEl) {
-        let btn = this.getHideButton(sceneEl);
-        if (!btn) {
-          btn = this.create3DHideButton(sceneEl);
+      showOverlayHideButton() {
+        const hideBtn = document.getElementById('overlay-hide-btn');
+        if (hideBtn) {
+          hideBtn.style.display = 'block';
         }
-        
-        // Mark clickable for raycaster
-        btn.classList.add('ui-clickable');
-        btn.addEventListener('click', this.onHideClicked.bind(this));
       },
       
-      getHideButton(sceneEl) {
-        return sceneEl.querySelector('.hide-button');
-      },
-      
-      create3DHideButton(sceneEl) {
-        const btn = document.createElement('a-entity');
-        btn.setAttribute('class', 'hide-button ui-clickable');
-        btn.setAttribute('geometry', 'primitive: plane; width: 0.3; height: 0.1');
-        btn.setAttribute('material', 'color: #ff4444; transparent: true; opacity: 0.8');
-        btn.setAttribute('text', 'value: HIDE; align: center; color: white; wrapCount: 8');
-        btn.setAttribute('position', '0 -0.3 0'); // Position below the model
-        btn.setAttribute('visible', 'false');
-        
-        sceneEl.appendChild(btn);
-        console.log(`🎬 Created hide button for scene: ${sceneEl.id}`);
-        return btn;
+      hideOverlayHideButton() {
+        const hideBtn = document.getElementById('overlay-hide-btn');
+        if (hideBtn) {
+          hideBtn.style.display = 'none';
+        }
       },
       
       setVisible(el, bool) {
@@ -1138,7 +1177,7 @@
     <ar-camera></ar-camera>
 
         <!-- Face Target AR Scene -->
-        <ar-root id="face-scene" reference-image="face-target" visible="true">
+        <ar-root id="face-scene" reference-image="face-target" visible="false">
             <!-- Smoothed container for stability -->
             <a-entity id="face-smoothed" smooth-pose="pos:0.18; rot:0.18; scale:0.22">
               <a-gltf-model id="face-model"
@@ -1157,7 +1196,7 @@
         </ar-root>
 
         <!-- Frog Target AR Scene -->
-        <ar-root id="frog-scene" reference-image="frog-target" visible="true">
+        <ar-root id="frog-scene" reference-image="frog-target" visible="false">
             <!-- Smoothed container for stability -->
             <a-entity id="frog-smoothed" smooth-pose="pos:0.18; rot:0.18; scale:0.22">
               <a-gltf-model id="moonwalk-model"
@@ -1176,6 +1215,13 @@
         </ar-root>
 
     </a-scene>
+
+    <!-- CRT-style overlay UI -->
+    <div id="crt-overlay">
+        <button id="overlay-hide-btn" onclick="SceneManager.onHideClicked()">
+            [ HIDE ]
+        </button>
+    </div>
 
 <!-- Pose smoothing component -->
 <script>
