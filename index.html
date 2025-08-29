@@ -606,19 +606,23 @@
           return;
         }
         
-        // Clone the model to avoid disrupting the original
-        const hudModel = modelElement.cloneNode(true);
-        hudModel.id = `hud-${modelElement.id}`;
+        // Remove competing transform components from model
+        modelElement.removeAttribute('smooth-pose');
         
-        // Set fixed pose in camera space
+        // Clear any inherited transform attributes that could interfere
+        modelElement.removeAttribute('animation');
+        modelElement.removeAttribute('animation-mixer');
+        
+        // Set fixed pose in camera space - SINGLE SOURCE OF TRUTH FOR POSITIONING
         if (sceneId === 'face-scene') {
-          hudModel.setAttribute('position', '0 -0.5 -2');
-          hudModel.setAttribute('scale', '0.8 0.8 0.8');
+          modelElement.setAttribute('position', '0 -0.5 -2');
+          modelElement.setAttribute('scale', '0.8 0.8 0.8');
         } else if (sceneId === 'frog-scene') {
-          hudModel.setAttribute('position', '0 -0.8 -2.5');
-          hudModel.setAttribute('scale', '1.2 1.2 1.2');
+          // Optimized frog pose from memory file debugging
+          modelElement.setAttribute('position', '0 -1.2 -2.5');
+          modelElement.setAttribute('scale', '0.8 0.8 0.8');
         }
-        hudModel.setAttribute('rotation', '0 0 0');
+        modelElement.setAttribute('rotation', '0 0 0');
         
         // Add lighting for the HUD model
         const ambientLight = document.createElement('a-light');
@@ -632,16 +636,16 @@
         directionalLight.setAttribute('color', '#ffffff');
         directionalLight.setAttribute('intensity', '3.0');
         
-        // Append to HUD root
-        hudRoot.appendChild(hudModel);
+        // Reparent model to HUD root
+        hudRoot.appendChild(modelElement);
         hudRoot.appendChild(ambientLight);
         hudRoot.appendChild(directionalLight);
         
         // Track current HUD model
-        this.currentHudModel = hudModel;
+        this.currentHudModel = modelElement;
         this.currentSceneId = sceneId;
         
-        console.log(`🎬 Model ${modelElement.id} reparented to HUD at fixed position`);
+        console.log(`🎬 Model ${modelElement.id} reparented to HUD with direct attribute modification`);
       },
       
       
@@ -973,9 +977,7 @@
         const faceModel = document.getElementById('face-model');
         
         if (moonwalkModel) {
-          moonwalkModel.object3D.position.set(0, -1.2, 0);
-          moonwalkModel.object3D.scale.set(0.8, 0.8, 0.8);
-          console.log('Fixed moonwalk model positioning');
+          console.log('Moonwalk model found - positioning handled by HUD only');
         }
         
         if (faceModel) {
@@ -1352,8 +1354,6 @@
             <a-entity id="frog-smoothed" smooth-pose="pos:0.18; rot:0.18; scale:0.22">
               <a-gltf-model id="moonwalk-model"
                             src="#moonwalk-model-asset"
-                            position="0 -1.2 0"
-                            scale="0.8 0.8 0.8"
                             animation-mixer="clip: *"
                             shadow="cast: true; receive: true">
               </a-gltf-model>
