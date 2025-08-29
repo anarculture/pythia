@@ -535,26 +535,49 @@
         console.log('🎬 Scene Manager initialized in SCANNING state');
       },
       
-      onTargetFound(event) {
-        if (this.state !== AppState.SCANNING) {
-          console.log('🎯 Target found but already SHOWING - ignoring');
-          return; // Idempotent: ignore when already showing
+      onTargetFound(ev) {
+        const ref = ev.detail && ev.detail.referenceImage;
+        console.log('🎬 SceneManager - Target found:', ref ? ref.name : 'none');
+        
+        if (ref && TARGET_TO_SCENE[ref.name]) {
+          const sceneId = TARGET_TO_SCENE[ref.name];
+          console.log(`🎬 Showing scene: ${sceneId} for target: ${ref.name}`);
+          
+          // Show the corresponding scene
+          this.showScene(sceneId);
+          
+          // Update state to DISPLAYING
+          this.state = AppState.SHOWING;
+          
+          // Show hide button
+          this.showOverlayHideButton();
+          
+          // Update target indicator
+          const targetIndicator = document.getElementById('target-indicator');
+          const targetName = document.getElementById('target-name');
+          if (targetIndicator && targetName) {
+            targetName.textContent = ref.name === 'face-target' ? 'Face Model' : 'Moonwalk Animation';
+            targetIndicator.style.display = 'block';
+          }
+          
+          // Hide aim overlay
+          const aimOverlay = document.getElementById('aim-overlay');
+          if (aimOverlay) {
+            aimOverlay.style.transition = 'opacity 1s ease-out';
+            aimOverlay.style.opacity = '0';
+            setTimeout(() => aimOverlay.style.display = 'none', 1000);
+          }
+          
+          // Trigger particle burst for visual feedback
+          if (typeof ARtedita !== 'undefined' && ARtedita.triggerParticleBurst) {
+            ARtedita.triggerParticleBurst();
+          }
+          
+          console.log('🎬 State changed to DISPLAYING, hide button shown');
         }
-        
-        const name = event.detail && (event.detail.name || (event.detail.referenceImage && event.detail.referenceImage.name));
-        const sceneId = TARGET_TO_SCENE[name];
-        
-        if (!sceneId) {
-          console.warn(`🎯 Unknown target: ${name}`);
-          return;
-        }
-        
-        console.log(`🎯 Target found: ${name} → ${sceneId} - PERSISTING MODEL`);
-        this.showScenePersistent(sceneId);
-        this.state = AppState.SHOWING;
       },
       
-      showScenePersistent(sceneId) {
+      showScene(sceneId) {
         this.hideAllScenes();
         
         const el = this.scenes[sceneId];
@@ -563,15 +586,9 @@
           return;
         }
         
-        // Make scene persistent - it will stay visible even when target is lost
+        // Make scene visible
         this.setVisible(el, true);
         this.currentSceneId = sceneId;
-        
-        
-        // Show overlay hide button
-        this.showOverlayHideButton();
-        
-        console.log(`🎬 Showing persistent scene: ${sceneId} - will not auto-hide on target lost`);
       },
       
       
@@ -586,14 +603,12 @@
       },
       
       onHideClicked() {
-        if (this.state !== AppState.SHOWING) return;
-        
         console.log('🎬 Hide button clicked - triggering target lost behavior');
-        this.triggerTargetLostBehavior();
-      },
-      
-      triggerTargetLostBehavior() {
-        // Hide all scenes first
+        
+        // Hide the hide button first
+        this.hideOverlayHideButton();
+        
+        // Hide all scenes
         this.hideAllScenes();
         
         // Execute the same logic as artargetlost event
@@ -890,26 +905,27 @@
         }
       });
       
-      scene.addEventListener('artargetlost', (ev) => {
-        console.log('🎯 AR Target Lost Event:', ev);
-        const ref = ev.detail && ev.detail.referenceImage;
+      // Remove the conflicting artargetlost event handler that breaks persistence
+      // scene.addEventListener('artargetlost', (ev) => {
+      //   console.log('🎯 AR Target Lost Event:', ev);
+      //   const ref = ev.detail && ev.detail.referenceImage;
         
-        if (ref && (ref.name === 'face-target' || ref.name === 'frog-target')) {
-          console.log(`❌ TARGET LOST: ${ref.name} - MODEL PERSISTING (not auto-hiding)`);
+      //   if (ref && (ref.name === 'face-target' || ref.name === 'frog-target')) {
+      //     console.log(`❌ TARGET LOST: ${ref.name} - MODEL PERSISTING (not auto-hiding)`);
           
-          // Hide target indicator only
-          const targetIndicator = document.getElementById('target-indicator');
-          if (targetIndicator) {
-            targetIndicator.style.display = 'none';
-          }
+      //     // Hide target indicator only
+      //     const targetIndicator = document.getElementById('target-indicator');
+      //     if (targetIndicator) {
+      //       targetIndicator.style.display = 'none';
+      //     }
           
-          // DO NOT show aim overlay again - model should persist
-          // DO NOT call playOverlay() - model should stay visible
-          // DO NOT reset modelAnchored - model remains anchored
+      //     // DO NOT show aim overlay again - model should persist
+      //     // DO NOT call playOverlay() - model should stay visible
+      //     // DO NOT reset modelAnchored - model remains anchored
           
-          console.log('🎬 Model persistence: Scene remains visible despite target lost');
-        }
-      });
+      //     console.log('🎬 Model persistence: Scene remains visible despite target lost');
+      //   }
+      // });
       
       // Browser compatibility check
       ARtedita.checkBrowserSupport = () => {
