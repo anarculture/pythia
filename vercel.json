@@ -1,14 +1,7 @@
 {
-  "redirects": [
-    {
-      "source": "/",
-      "destination": "/AR",
-      "permanent": false
-    }
-  ],
   "rewrites": [
     {
-      "source": "/AR",
+      "source": "/",
       "destination": "/index.html"
     }
   ]
