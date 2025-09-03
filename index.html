@@ -305,18 +305,22 @@
             z-index: 4000 !important;
             background: #000 !important;
             display: block !important;
+            /* Safe area padding */
+            padding-top: env(safe-area-inset-top, 0px);
+            padding-bottom: env(safe-area-inset-bottom, 0px);
+            padding-left: env(safe-area-inset-left, 0px);
+            padding-right: env(safe-area-inset-right, 0px);
         }
         
         .crt-screen {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
+            position: relative;
+            width: 100%;
+            height: 100%;
             background: radial-gradient(ellipse at center, #001100 0%, #000800 50%, #000000 100%);
             border-radius: 0;
             box-shadow: 
                 inset 0 0 100px rgba(0, 255, 0, 0.1);
+            overflow: hidden;
         }
         
         /* Scanlines Effect */
@@ -345,15 +349,18 @@
             100% { opacity: 1; }
         }
         
-        /* Terminal Text Styling */
+        /* Terminal Text Styling with Responsive Design */
         .terminal {
             position: absolute;
-            top: 35%;
+            top: calc(30% + env(safe-area-inset-top, 0px));
             left: 50%;
             transform: translateX(-50%);
             text-align: center;
             color: #00ff00;
             font-family: 'Courier New', monospace;
+            width: 90%;
+            max-width: 500px;
+            padding: 0 1rem;
         }
         
         .terminal h2 {
@@ -397,15 +404,19 @@
             }
         }
         
-        /* Terminal Loading Bar */
+        /* Terminal Loading Bar with Responsive Design */
         .loading-bar-container {
             position: absolute;
-            top: 65%;
+            top: calc(60% + env(safe-area-inset-top, 0px));
             left: 50%;
             transform: translateX(-50%);
-            width: 500px;
+            width: 90%;
+            max-width: 500px;
             text-align: left;
             font-family: 'Courier New', monospace;
+            padding: 0 1rem;
+            /* Ensure it doesn't go under home bar */
+            margin-bottom: calc(2rem + env(safe-area-inset-bottom, 0px));
         }
         
         .terminal-prompt {
@@ -465,13 +476,14 @@
             letter-spacing: 1px;
         }
         
-        /* Screen Burn Effect */
+        /* Screen Burn Effect - Responsive */
         .screen-burn {
             position: absolute;
-            top: 30%;
-            left: 45%;
-            width: 200px;
-            height: 50px;
+            top: calc(25% + env(safe-area-inset-top, 0px));
+            left: 50%;
+            transform: translateX(-50%);
+            width: min(200px, 60vw);
+            height: min(50px, 8vh);
             background: radial-gradient(ellipse, rgba(0, 255, 0, 0.05) 0%, transparent 70%);
             animation: burnFlicker 3s ease-in-out infinite;
         }
@@ -481,24 +493,158 @@
             50% { opacity: 0.1; }
         }
         
-        /* Responsive design for CRT */
+        /* Responsive design for CRT loader */
         @media (max-width: 768px) {
+            .terminal {
+                top: calc(25% + env(safe-area-inset-top, 0px));
+                width: 95%;
+                padding: 0 0.5rem;
+            }
+            
+            .terminal h2 {
+                font-size: 1.8rem;
+                letter-spacing: 3px;
+                margin-bottom: 1.5rem;
+            }
+            
+            .terminal p {
+                font-size: 0.8rem;
+                letter-spacing: 1px;
+                line-height: 1.6;
+            }
+            
+            .loading-bar-container {
+                top: calc(55% + env(safe-area-inset-top, 0px));
+                width: 95%;
+                padding: 0 0.5rem;
+            }
+            
+            .terminal-prompt {
+                font-size: 0.75rem;
+            }
+            
+            .loading-percentage {
+                font-size: 0.75rem;
+            }
+        }
+        
+        /* Small screens (iPhone SE - 320px) */
+        @media (max-width: 480px) {
+            .terminal {
+                top: calc(20% + env(safe-area-inset-top, 0px));
+                width: 98%;
+                padding: 0 0.25rem;
+            }
+            
             .terminal h2 {
                 font-size: 1.5rem;
-                letter-spacing: 3px;
+                letter-spacing: 2px;
+                margin-bottom: 1rem;
             }
             
             .terminal p {
                 font-size: 0.7rem;
-                letter-spacing: 1px;
+                letter-spacing: 0.5px;
+                line-height: 1.5;
             }
             
             .loading-bar-container {
-                width: 350px;
+                top: calc(50% + env(safe-area-inset-top, 0px));
+                width: 98%;
+                padding: 0 0.25rem;
             }
             
             .terminal-prompt {
                 font-size: 0.7rem;
+                margin-bottom: 8px;
+            }
+            
+            .loading-bar {
+                height: 20px;
+            }
+            
+            .loading-percentage {
+                font-size: 0.7rem;
+                margin-top: 12px;
+            }
+        }
+        
+        /* Extra small screens (320px) */
+        @media (max-width: 360px) {
+            .terminal {
+                top: calc(18% + env(safe-area-inset-top, 0px));
+            }
+            
+            .terminal h2 {
+                font-size: 1.3rem;
+                letter-spacing: 1px;
+                margin-bottom: 0.8rem;
+            }
+            
+            .terminal p {
+                font-size: 0.65rem;
+                letter-spacing: 0px;
+                line-height: 1.4;
+            }
+            
+            .loading-bar-container {
+                top: calc(45% + env(safe-area-inset-top, 0px));
+            }
+            
+            .terminal-prompt {
+                font-size: 0.65rem;
+            }
+            
+            .loading-percentage {
+                font-size: 0.65rem;
+            }
+        }
+        
+        /* Landscape orientation adjustments */
+        @media (orientation: landscape) and (max-height: 500px) {
+            .terminal {
+                top: calc(10% + env(safe-area-inset-top, 0px));
+            }
+            
+            .terminal h2 {
+                font-size: 1.4rem;
+                margin-bottom: 0.8rem;
+                letter-spacing: 2px;
+            }
+            
+            .terminal p {
+                font-size: 0.7rem;
+                line-height: 1.4;
+            }
+            
+            .loading-bar-container {
+                top: calc(40% + env(safe-area-inset-top, 0px));
+            }
+        }
+        
+        /* Reduced motion preferences */
+        @media (prefers-reduced-motion: reduce) {
+            .terminal h2 {
+                animation: none;
+            }
+            
+            .loading-progress {
+                animation: none;
+            }
+            
+            .crt-screen::before {
+                animation: none;
+            }
+            
+            .screen-burn {
+                animation: none;
+            }
+            
+            @keyframes terminalShimmer {
+                0%, 100% { 
+                    filter: brightness(1);
+                    box-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
+                }
             }
         }
         
@@ -1100,6 +1246,12 @@
       overlayPaused: false
     },
     
+    // UI state flags - single source of truth
+    ui: {
+      loaderVisible: true,
+      onboardingVisible: false
+    },
+    
     // DOM elements cache
     elements: {},
     
@@ -1305,51 +1457,62 @@
       console.log('All systems ready - hiding loader and showing onboarding');
       const customLoader = document.getElementById('custom-loader');
       
-      if (customLoader && customLoader.style.display !== 'none') {
+      if (customLoader && ARtedita.ui.loaderVisible) {
         // Fix model positions now that AR is ready
         ARtedita.fixModelPositions();
-        
-        // Ensure onboarding is completely hidden during loader fade
-        ARtedita.hideOnboarding();
         
         // Hide loader with fade effect
         customLoader.classList.add('fade-out');
         customLoader.style.opacity = '0';
+        customLoader.style.pointerEvents = 'none';
         
         setTimeout(() => {
-          // Completely remove loader from DOM
-          customLoader.style.display = 'none';
-          customLoader.style.visibility = 'hidden';
+          // Completely remove loader from DOM to prevent any interference
+          customLoader.remove();
+          ARtedita.ui.loaderVisible = false;
+          console.log('Loader completely removed from DOM');
           
-          // Show onboarding only after loader is completely hidden
+          // Show onboarding only after loader is completely removed
           setTimeout(() => {
             ARtedita.showOnboarding();
           }, 100);
         }, 500);
-      } else {
+      } else if (!ARtedita.ui.loaderVisible && !ARtedita.ui.onboardingVisible) {
         // Loader already hidden, show onboarding directly
         ARtedita.showOnboarding();
       }
     };
     
     ARtedita.showOnboarding = () => {
-      console.log('Showing onboarding overlay');
+      console.trace('showOnboarding() called');
+      
+      // Idempotent check - if already visible, do nothing
+      if (ARtedita.ui.onboardingVisible) {
+        console.log('Onboarding already visible, skipping');
+        return;
+      }
+      
       const customLoader = document.getElementById('custom-loader');
       const onboardingOverlay = document.getElementById('onboarding-overlay');
       
-      // Double-check loader is hidden before showing onboarding
-      if (customLoader && (customLoader.style.display !== 'none' || customLoader.style.visibility !== 'hidden')) {
-        console.log('Loader still visible, delaying onboarding');
+      // Double-check loader is completely removed before showing onboarding
+      if (customLoader || ARtedita.ui.loaderVisible) {
+        console.log('Loader still exists, delaying onboarding');
         setTimeout(() => ARtedita.showOnboarding(), 200);
         return;
       }
       
       if (onboardingOverlay) {
         console.log('Making onboarding overlay visible');
+        
+        // Set state flag first
+        ARtedita.ui.onboardingVisible = true;
+        
         // Force visibility with all necessary properties
         onboardingOverlay.style.display = 'block';
         onboardingOverlay.style.visibility = 'visible';
         onboardingOverlay.style.opacity = '1';
+        onboardingOverlay.style.pointerEvents = 'auto';
         onboardingOverlay.classList.add('visible');
         onboardingOverlay.classList.remove('fade-out');
         
@@ -1359,7 +1522,8 @@
           display: computedStyle.display,
           visibility: computedStyle.visibility,
           opacity: computedStyle.opacity,
-          zIndex: computedStyle.zIndex
+          zIndex: computedStyle.zIndex,
+          pointerEvents: computedStyle.pointerEvents
         });
       } else {
         console.error('Onboarding overlay element not found!');
@@ -1367,14 +1531,27 @@
     };
     
     ARtedita.hideOnboarding = () => {
+      console.trace('hideOnboarding() called');
+      
+      // Idempotent check - if already hidden, do nothing
+      if (!ARtedita.ui.onboardingVisible) {
+        console.log('Onboarding already hidden, skipping');
+        return;
+      }
+      
       console.log('Hiding onboarding overlay');
       const onboardingOverlay = document.getElementById('onboarding-overlay');
+      
       if (onboardingOverlay) {
-        // Immediately hide without animation for clean state
+        // Set state flag first
+        ARtedita.ui.onboardingVisible = false;
+        
+        // Hide with fade effect
         onboardingOverlay.classList.remove('visible');
         onboardingOverlay.classList.add('fade-out');
         onboardingOverlay.style.opacity = '0';
         onboardingOverlay.style.visibility = 'hidden';
+        onboardingOverlay.style.pointerEvents = 'none';
         
         setTimeout(() => {
           onboardingOverlay.style.display = 'none';
@@ -1824,12 +2001,44 @@ AFRAME.registerComponent('smooth-pose', {
   tick();
 })();
     
-    // Setup onboarding button event listener
+    // Setup onboarding button event listener - ensure single binding
+    let onboardingButtonBound = false;
+    
     document.addEventListener('DOMContentLoaded', () => {
+      if (onboardingButtonBound) {
+        console.log('Onboarding button already bound, skipping');
+        return;
+      }
+      
       const startArBtn = document.getElementById('start-ar-btn');
       if (startArBtn) {
-        startArBtn.addEventListener('click', ARtedita.hideOnboarding);
-        startArBtn.addEventListener('touchend', ARtedita.hideOnboarding);
+        let isHandling = false;
+        
+        const handleStartClick = (event) => {
+          if (isHandling) {
+            console.log('Start button click already being handled, ignoring duplicate');
+            return;
+          }
+          
+          isHandling = true;
+          console.log('Start button clicked - hiding onboarding');
+          
+          // Prevent default and stop propagation
+          event.preventDefault();
+          event.stopPropagation();
+          
+          ARtedita.hideOnboarding();
+          
+          // Reset flag after a short delay
+          setTimeout(() => {
+            isHandling = false;
+          }, 100);
+        };
+        
+        // Use only click event for better compatibility
+        startArBtn.addEventListener('click', handleStartClick);
+        onboardingButtonBound = true;
+        console.log('Onboarding Start button listener bound (click only)');
       }
     });
 </script>
