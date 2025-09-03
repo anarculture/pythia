@@ -506,7 +506,7 @@
             }
         }
         
-        /* Onboarding overlay responsiveness */
+        /* Onboarding overlay responsiveness - HIGHEST Z-INDEX */
         #onboarding-overlay {
             position: fixed !important;
             top: 0 !important;
@@ -515,7 +515,7 @@
             height: 100vh !important;
             background: #000 !important;
             display: none !important;
-            z-index: 3000 !important;
+            z-index: 99999 !important; /* Highest z-index to ensure visibility */
             overflow: hidden !important;
             /* Safe area padding */
             padding-top: env(safe-area-inset-top, 0px);
@@ -1482,7 +1482,6 @@
   });
 </script>
 
-<body>
     <!-- CRT Terminal Loading Screen -->
     <div id="custom-loader">
         <div class="crt-screen">
@@ -1791,39 +1790,40 @@ AFRAME.registerComponent('smooth-pose', {
     });
 </script>
 
-    <!-- CRT Terminal Onboarding Overlay -->
-    <div id="onboarding-overlay">
-        <div class="crt-screen">
-            <!-- Screen Burn Effect -->
-            <div class="screen-burn"></div>
-            
-            <!-- Terminal Header -->
-            <div class="terminal">
-                <h2>ARtEdita</h2>
-                <p>AUGMENTED REALITY SYSTEM v2.1</p>
-            </div>
-            
-            <!-- Instructions Content -->
-            <div class="onboarding-instructions">
-                <div class="instruction-box">
-                    <h3>Instrucciones</h3>
-                    
-                    <div>
-                        <p>Apunta tu cámara a una de las caras de tu <strong>BrickCanvas</strong> y espera unos segundos para desbloquear tu experiencia 3D.</p>
-                        <p>Asegúrate de enmarcarlo dentro de la cabeza guía y de tener buena iluminación.</p>
-                    </div>
-                    
-                    <!-- Button inside the instructions box -->
-                    <div style="text-align: center;">
-                        <button id="start-ar-btn">
-                            [ INICIAR SISTEMA ]
-                        </button>
-                    </div>
+</body>
+
+<!-- CRT Terminal Onboarding Overlay - MUST BE LAST IN DOM -->
+<div id="onboarding-overlay">
+    <div class="crt-screen">
+        <!-- Screen Burn Effect -->
+        <div class="screen-burn"></div>
+        
+        <!-- Terminal Header -->
+        <div class="terminal">
+            <h2>ARtEdita</h2>
+            <p>AUGMENTED REALITY SYSTEM v2.1</p>
+        </div>
+        
+        <!-- Instructions Content -->
+        <div class="onboarding-instructions">
+            <div class="instruction-box">
+                <h3>Instrucciones</h3>
+                
+                <div>
+                    <p>Apunta tu cámara a una de las caras de tu <strong>BrickCanvas</strong> y espera unos segundos para desbloquear tu experiencia 3D.</p>
+                    <p>Asegúrate de enmarcarlo dentro de la cabeza guía y de tener buena iluminación.</p>
+                </div>
+                
+                <!-- Button inside the instructions box -->
+                <div style="text-align: center;">
+                    <button id="start-ar-btn">
+                        [ INICIAR SISTEMA ]
+                    </button>
                 </div>
             </div>
-            
         </div>
+        
     </div>
+</div>
 
-</body>
 </html>
