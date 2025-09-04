@@ -197,6 +197,72 @@
             transform: scale(0.95);
         }
 
+        /* ===== TERMINAL THEME OVERRIDE FOR HIDE BUTTON ===== */
+        /* Matches CRT/terminal aesthetic of loader and onboarding screens */
+        #overlay-hide-btn {
+            /* Terminal colors - match onboarding button */
+            background: #001100 !important;
+            color: #00ff00 !important;
+            border: 2px solid #00ff00 !important;
+            
+            /* Terminal typography */
+            font-family: 'Courier New', monospace !important;
+            font-size: 0.85rem !important;
+            letter-spacing: 1.5px !important;
+            text-transform: uppercase !important;
+            font-weight: normal !important;
+            
+            /* Terminal styling */
+            border-radius: 0 !important; /* Square corners like terminal */
+            text-shadow: 0 0 5px #00ff00 !important;
+            box-shadow: 
+                inset 0 0 10px rgba(0, 255, 0, 0.1),
+                0 0 15px rgba(0, 255, 0, 0.3) !important;
+            
+            /* Maintain accessibility and safe areas */
+            min-height: 48px !important; /* Touch target */
+            min-width: 140px !important;
+            padding: 12px 24px !important;
+            margin-bottom: env(safe-area-inset-bottom, 8px) !important;
+            
+            /* Keep existing positioning and z-index */
+            transition: all 0.3s ease !important;
+        }
+
+        #overlay-hide-btn:hover, #overlay-hide-btn:focus {
+            background: #002200 !important; /* Brighter terminal green */
+            box-shadow: 
+                inset 0 0 15px rgba(0, 255, 0, 0.2),
+                0 0 25px rgba(0, 255, 0, 0.5) !important;
+            outline: none !important; /* Custom focus styling via glow */
+        }
+
+        #overlay-hide-btn:active {
+            transform: scale(0.98) !important; /* Subtle press feedback */
+            background: #003300 !important;
+        }
+
+        /* Reduced motion support */
+        @media (prefers-reduced-motion: reduce) {
+            #overlay-hide-btn {
+                transition: none !important;
+                text-shadow: none !important;
+                box-shadow: 
+                    inset 0 0 5px rgba(0, 255, 0, 0.1),
+                    0 0 5px rgba(0, 255, 0, 0.2) !important;
+            }
+            
+            #overlay-hide-btn:hover, #overlay-hide-btn:focus {
+                box-shadow: 
+                    inset 0 0 8px rgba(0, 255, 0, 0.15),
+                    0 0 8px rgba(0, 255, 0, 0.3) !important;
+            }
+            
+            #overlay-hide-btn:active {
+                transform: none !important;
+            }
+        }
+
         @keyframes crtGlow {
             0% { 
                 box-shadow: 
