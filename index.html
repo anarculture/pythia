@@ -33,16 +33,25 @@
             html, body { height: 100vh; height: -webkit-fill-available; }
         }
 
-        /* Fullscreen A-Frame/AR with proper z-index hierarchy */
+        /* ===== Z-INDEX STACKING ORDER (SINGLE SOURCE OF TRUTH) =====
+         * 100  → Scene/Camera (a-scene, ar-viewport)
+         * 1000 → HUD base (aim overlay container) - pointer-events: none
+         * 2000 → HUD interactive (hide button) - pointer-events: auto
+         * 4000 → Loader (visible only during boot)
+         * 8000 → Onboarding (shown after loader)
+         * 9000 → Alerts/Errors/Toasts (always topmost)
+         * NEVER use arbitrary values - only use these constants
+         */
+
+        /* Fullscreen A-Frame/AR with standardized z-index */
         a-scene, ar-viewport, ar-hud {
             width: 100vw !important;
             height: 100vh !important;
-            height: -webkit-fill-available !important;
             position: fixed !important;
             top: 0 !important; left: 0 !important;
         }
         a-scene { z-index: 100 !important; }
-        ar-viewport { z-index: 200 !important; background: transparent !important; }
+        ar-viewport { z-index: 100 !important; background: transparent !important; }
         ar-hud { z-index: 1000 !important; }
 
         /* Aim overlay glow effect */
@@ -68,13 +77,14 @@
             }
         }
 
-        /* Aim overlay (LEGO) */
+        /* Aim overlay - positioned center with glow */
         #aim-overlay {
             position: fixed !important;
             top: 50% !important; left: 50% !important;
             transform: translate(-50%, -50%) !important;
             width: 80vmin !important; height: auto !important;
-            z-index: 1500 !important; pointer-events: none !important;
+            z-index: 1000 !important; /* HUD base layer */
+            pointer-events: none !important; /* Container passes through clicks */
             transition: opacity .25s ease;
         }
         #aim-overlay svg {
@@ -155,16 +165,15 @@
             position: fixed;
             bottom: 30px;
             right: 30px;
-            background: rgba(0, 255, 0, 0.9);
+            background: #00ff00;
             color: #000;
-            border: 2px solid #00ff00;
-            padding: 12px 24px;
-            font-family: 'Courier New', monospace;
-            font-size: 14px;
+            border: none;
+            padding: 15px 30px;
+            font-size: 16px;
             font-weight: 600;
             border-radius: 20px;
             cursor: pointer;
-            z-index: 2000;
+            z-index: 2000; /* HUD interactive layer */
             text-transform: uppercase;
             letter-spacing: 1px;
             box-shadow: 
@@ -172,7 +181,7 @@
                 inset 0 0 10px rgba(0, 255, 0, 0.2);
             transition: all 0.2s ease;
             display: none;
-            pointer-events: auto;
+            pointer-events: auto; /* Interactive element */
             touch-action: manipulation;
         }
 
@@ -203,7 +212,7 @@
         
         
         /* Particle burst animation for model unlock */
-        .particle-burst {
+        .particle-system {
             position: fixed;
             top: 50%;
             left: 50%;
@@ -211,7 +220,7 @@
             width: 300px;
             height: 300px;
             pointer-events: none;
-            z-index: 6000;
+            z-index: 4000; /* Loader layer - visual effects during boot */
         }
         
         .particle {
@@ -265,7 +274,7 @@
             height: 150px;
             border-radius: 50%;
             pointer-events: none;
-            z-index: 5900;
+            z-index: 4000; /* Loader layer - visual effects during boot */
             animation: centerFlash 1s ease-out;
         }
         
@@ -302,7 +311,7 @@
             left: 0 !important;
             width: 100vw !important;
             height: 100vh !important;
-            z-index: 4000 !important;
+            z-index: 4000 !important; /* Loader layer */
             background: #000 !important;
             display: block !important;
             /* Safe area padding */
@@ -667,9 +676,9 @@
             height: 100vh !important;
             background: #000 !important;
             display: none !important;
-            z-index: 9000 !important;
+            z-index: 8000 !important; /* Onboarding layer */
             overflow: hidden !important;
-            pointer-events: auto !important;
+            pointer-events: auto !important; /* Interactive overlay */
             visibility: hidden !important;
             opacity: 0 !important;
             transition: opacity 0.5s ease !important;
@@ -1600,7 +1609,7 @@
         errorDiv.style.cssText = `
           position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
           background: #ff4444; color: white; padding: 20px; border-radius: 10px;
-          text-align: center; z-index: 9999; max-width: 80%;
+          text-align: center; z-index: 9000; max-width: 80%; pointer-events: auto;
         `;
         errorDiv.textContent = message;
         document.body.appendChild(errorDiv);
