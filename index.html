@@ -23,14 +23,38 @@
     <style>
         /* Reset */
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        html, body {
-            width: 100%; height: 100%;
-            overflow: hidden; background: transparent;
-            font-family: Arial, sans-serif;
-            position: fixed; top: 0; left: 0;
+        /* ===== EDGE-TO-EDGE VIEWPORT (NO WHITE GUTTERS) ===== */
+        :root {
+            --app-vh: 1vh; /* Fallback for iOS 100vh bug */
         }
-        @media (max-width: 768px) {
-            html, body { height: 100vh; height: -webkit-fill-available; }
+        
+        html, body {
+            /* Dynamic viewport units with fallbacks */
+            width: 100dvw;
+            width: 100svw;
+            width: 100vw;
+            height: 100dvh;
+            height: 100svh;
+            height: 100vh;
+            height: calc(var(--app-vh, 1vh) * 100); /* iOS fallback */
+            
+            /* Remove default spacing and backgrounds */
+            margin: 0 !important;
+            padding: 0 !important;
+            border: none !important;
+            background: transparent !important;
+            
+            /* Prevent scrolling and overscroll */
+            overflow: hidden !important;
+            overscroll-behavior: none !important;
+            -webkit-overflow-scrolling: touch !important;
+            
+            /* Fixed positioning */
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            
+            font-family: Arial, sans-serif;
         }
 
         /* ===== Z-INDEX STACKING ORDER (SINGLE SOURCE OF TRUTH) =====
@@ -43,16 +67,58 @@
          * NEVER use arbitrary values - only use these constants
          */
 
-        /* Fullscreen A-Frame/AR with standardized z-index */
+        /* Edge-to-edge A-Frame/AR with standardized z-index */
         a-scene, ar-viewport, ar-hud {
+            /* Dynamic viewport units with fallbacks */
+            width: 100dvw !important;
+            width: 100svw !important;
             width: 100vw !important;
+            height: 100dvh !important;
+            height: 100svh !important;
             height: 100vh !important;
+            height: calc(var(--app-vh, 1vh) * 100) !important;
+            
+            /* Edge-to-edge positioning */
             position: fixed !important;
-            top: 0 !important; left: 0 !important;
+            top: 0 !important;
+            left: 0 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            border: none !important;
         }
-        a-scene { z-index: 100 !important; }
-        ar-viewport { z-index: 100 !important; background: transparent !important; }
-        ar-hud { z-index: 1000 !important; }
+        
+        a-scene { 
+            z-index: 100 !important;
+            background: transparent !important;
+        }
+        
+        ar-viewport { 
+            z-index: 100 !important;
+            background: transparent !important;
+        }
+        
+        ar-hud { 
+            z-index: 1000 !important;
+            background: transparent !important;
+        }
+        
+        /* Full-bleed camera video/canvas - no letterboxing */
+        ar-viewport video,
+        ar-viewport canvas,
+        a-scene video,
+        a-scene canvas {
+            width: 100dvw !important;
+            width: 100svw !important;
+            width: 100vw !important;
+            height: 100dvh !important;
+            height: 100svh !important;
+            height: 100vh !important;
+            height: calc(var(--app-vh, 1vh) * 100) !important;
+            object-fit: cover !important;
+            object-position: center !important;
+            max-width: none !important;
+            max-height: none !important;
+        }
 
         /* Aim overlay glow effect */
         #aim-overlay.glow-exit {
@@ -86,6 +152,8 @@
             z-index: 1000 !important; /* HUD base layer */
             pointer-events: none !important; /* Container passes through clicks */
             transition: opacity .25s ease;
+            margin: 0 !important;
+            padding: 0 !important;
         }
         #aim-overlay svg {
             width: 100% !important;
@@ -223,7 +291,8 @@
             min-height: 48px !important; /* Touch target */
             min-width: 140px !important;
             padding: 12px 24px !important;
-            margin-bottom: env(safe-area-inset-bottom, 8px) !important;
+            margin-bottom: calc(env(safe-area-inset-bottom, 0px) + 8px) !important;
+            margin-right: calc(env(safe-area-inset-right, 0px) + 8px) !important;
             
             /* Keep existing positioning and z-index */
             transition: all 0.3s ease !important;
@@ -375,12 +444,28 @@
             position: fixed !important;
             top: 0 !important;
             left: 0 !important;
+            
+            /* Edge-to-edge viewport */
+            width: 100dvw !important;
+            width: 100svw !important;
             width: 100vw !important;
+            height: 100dvh !important;
+            height: 100svh !important;
             height: 100vh !important;
+            height: calc(var(--app-vh, 1vh) * 100) !important;
+            
             z-index: 4000 !important; /* Loader layer */
             background: #000 !important;
             display: block !important;
-            /* Safe area padding */
+            margin: 0 !important;
+            padding: 0 !important;
+            
+            /* Safe area padding for content inside */
+            box-sizing: border-box !important;
+        }
+        
+        #custom-loader .crt-screen {
+            /* Apply safe-area padding to content, not container */
             padding-top: env(safe-area-inset-top, 0px);
             padding-bottom: env(safe-area-inset-bottom, 0px);
             padding-left: env(safe-area-inset-left, 0px);
@@ -738,8 +823,16 @@
             position: fixed !important;
             top: 0 !important;
             left: 0 !important;
+            
+            /* Edge-to-edge viewport */
+            width: 100dvw !important;
+            width: 100svw !important;
             width: 100vw !important;
+            height: 100dvh !important;
+            height: 100svh !important;
             height: 100vh !important;
+            height: calc(var(--app-vh, 1vh) * 100) !important;
+            
             background: #000 !important;
             display: none !important;
             z-index: 8000 !important; /* Onboarding layer */
@@ -748,7 +841,13 @@
             visibility: hidden !important;
             opacity: 0 !important;
             transition: opacity 0.5s ease !important;
-            /* Safe area padding */
+            margin: 0 !important;
+            padding: 0 !important;
+            box-sizing: border-box !important;
+        }
+        
+        #onboarding-overlay .crt-screen {
+            /* Apply safe-area padding to content, not container */
             padding-top: env(safe-area-inset-top, 0px);
             padding-bottom: env(safe-area-inset-bottom, 0px);
             padding-left: env(safe-area-inset-left, 0px);
@@ -970,6 +1069,22 @@
 </head>
 
 <body>
+    <script>
+      // iOS 100vh bug fallback - update --app-vh on resize/orientation change
+      function updateViewportHeight() {
+        const vh = window.innerHeight * 0.01;
+        document.documentElement.style.setProperty('--app-vh', `${vh}px`);
+      }
+      
+      // Set initial value
+      updateViewportHeight();
+      
+      // Update on resize and orientation change
+      window.addEventListener('resize', updateViewportHeight);
+      window.addEventListener('orientationchange', () => {
+        setTimeout(updateViewportHeight, 100); // Delay for orientation change
+      });
+    </script>
 
 <script>
     // ===== SINGLE SOURCE OF TRUTH: MODEL POSE CONFIGURATIONS =====
