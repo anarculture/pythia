@@ -1048,9 +1048,9 @@
       },
       'frog-scene': {
         // 🐸 FROG POSE TUNING KNOB - Edit these values to adjust visible frog
-        position: { x: 0, y: -0.7, z: -2.2 },  // Camera-relative position (slightly closer & higher)
-        scale: { x: 1.0, y: 1.0, z: 1.0 },     // Size multiplier (normalized size)
-        rotation: { x: 0, y: 15, z: 0 }         // Euler angles (slight Y rotation for testing)
+        position: { x: 0, y: -0.5, z: -3.5 },  // Camera-relative position (further away)
+        scale: { x: 0.5, y: 0.5, z: 0.5 },     // Size multiplier (restored working size)
+        rotation: { x: 0, y: 0, z: 0 }          // No rotation (keep GLB animations only)
       }
     };
 
@@ -1569,8 +1569,8 @@
         const faceModel = document.getElementById('face-model');
         
         if (moonwalkModel) {
-          moonwalkModel.object3D.position.set(0, -1.2, 0);
-          moonwalkModel.object3D.scale.set(0.8, 0.8, 0.8);
+          moonwalkModel.object3D.position.set(0, -0.5, 0);
+          moonwalkModel.object3D.scale.set(2, 2, 2);
           console.log('Fixed moonwalk model positioning');
         }
         
@@ -2006,10 +2006,10 @@
                             shadow="cast: true; receive: true">
               </a-gltf-model>
 
-              <a-light type="ambient" color="#ffffff" intensity="2.51"></a-light>
-              <a-light type="directional" position="2 4 2" color="#ffffff" intensity="3.14" shadow="cast: true"></a-light>
-              <a-light type="point" position="-1 2 1" color="#4CAF50" intensity="30" decay="2"></a-light>
-              <a-light type="point" position="1 2 1" color="#2196F3" intensity="30" decay="2"></a-light>
+              <a-light type="ambient" color="#ffffff" intensity="0.8"></a-light>
+              <a-light type="directional" position="2 4 2" color="#ffffff" intensity="1.2" shadow="cast: true"></a-light>
+              <a-light type="point" position="-1 2 1" color="#4CAF50" intensity="8" decay="2"></a-light>
+              <a-light type="point" position="1 2 1" color="#2196F3" intensity="8" decay="2"></a-light>
             </a-entity>
         </ar-root>
 
@@ -2019,16 +2019,16 @@
             <a-entity id="frog-smoothed" smooth-pose="pos:0.18; rot:0.18; scale:0.22">
               <a-gltf-model id="moonwalk-model"
                             src="#moonwalk-model-asset"
-                            position="0 -1.2 0"
-                            scale="0.8 0.8 0.8"
+                            position="0 -0.5 0"
+                            scale="2 2 2"
                             animation-mixer="clip: *"
                             shadow="cast: true; receive: true">
               </a-gltf-model>
 
-              <a-light type="ambient" color="#ffffff" intensity="2.51"></a-light>
-              <a-light type="directional" position="2 4 2" color="#ffffff" intensity="3.14" shadow="cast: true"></a-light>
-              <a-light type="point" position="-1 2 1" color="#4CAF50" intensity="30" decay="2"></a-light>
-              <a-light type="point" position="1 2 1" color="#2196F3" intensity="30" decay="2"></a-light>
+              <a-light type="ambient" color="#ffffff" intensity="0.8"></a-light>
+              <a-light type="directional" position="2 4 2" color="#ffffff" intensity="1.2" shadow="cast: true"></a-light>
+              <a-light type="point" position="-1 2 1" color="#4CAF50" intensity="8" decay="2"></a-light>
+              <a-light type="point" position="1 2 1" color="#2196F3" intensity="8" decay="2"></a-light>
             </a-entity>
         </ar-root>
 
