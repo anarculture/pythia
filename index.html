@@ -1048,7 +1048,7 @@
       },
       'frog-scene': {
         // 🐸 FROG POSE TUNING KNOB - Edit these values to adjust visible frog
-        position: { x: 0, y: -0.5, z: -3.5 },  // Camera-relative position (further away)
+        position: { x: 0, y: -0.5, z: -4.5 },  // Camera-relative position (further away)
         scale: { x: 0.5, y: 0.5, z: 0.5 },     // Size multiplier (restored working size)
         rotation: { x: 0, y: 0, z: 0 }          // No rotation (keep GLB animations only)
       }
@@ -1214,13 +1214,13 @@
         const ambientLight = document.createElement('a-light');
         ambientLight.setAttribute('type', 'ambient');
         ambientLight.setAttribute('color', '#ffffff');
-        ambientLight.setAttribute('intensity', '2.5');
+        ambientLight.setAttribute('intensity', '2');
         
         const directionalLight = document.createElement('a-light');
         directionalLight.setAttribute('type', 'directional');
         directionalLight.setAttribute('position', '2 4 2');
         directionalLight.setAttribute('color', '#ffffff');
-        directionalLight.setAttribute('intensity', '3.0');
+        directionalLight.setAttribute('intensity', '1');
         
         // Append container (with nested model) to HUD root
         hudRoot.appendChild(hudContainer);
@@ -1569,8 +1569,20 @@
         const faceModel = document.getElementById('face-model');
         
         if (moonwalkModel) {
-          moonwalkModel.object3D.position.set(0, -0.5, 0);
-          moonwalkModel.object3D.scale.set(2, 2, 2);
+          // Apply pose from centralized configuration
+          const poseConfig = MODEL_POSE_CONFIG['frog-scene'];
+          if (poseConfig) {
+            moonwalkModel.object3D.position.set(
+              poseConfig.position.x,
+              poseConfig.position.y,
+              poseConfig.position.z
+            );
+            moonwalkModel.object3D.scale.set(
+              poseConfig.scale.x,
+              poseConfig.scale.y,
+              poseConfig.scale.z
+            );
+          }
           console.log('Fixed moonwalk model positioning');
         }
         
