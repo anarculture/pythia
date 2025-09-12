@@ -1,9 +1,9 @@
 ---
-trigger: model_decision
+trigger: manual
 description: This rule applies if the main answer is very technical.
 ---
 
-Rule: At the end of every response, always include a section titled "Simple Summary". 
+Rule: At the end of every response, include a section titled "Simple Summary". 
 
 In this section, re-explain the main idea of your response as if talking to a child:
 - Use short, clear sentences.

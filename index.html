@@ -1054,6 +1054,18 @@
       }
     };
 
+    // Asset mapping for HUD model creation
+    const ASSET_BY_SCENE = {
+      'face-scene': '#face-model-asset',
+      'frog-scene': '#moonwalk-model-asset'
+    };
+
+    // Per-scene animation setup rules
+    const ANIMATION_BY_SCENE = {
+      'face-scene': 'property: rotation; to: 0 360 0; loop: true; dur: 5000',
+      'frog-scene': 'clip: *'
+    };
+
     // State Machine-Based Scene Management System
     const TARGET_TO_SCENE = {
       'face-target': 'face-scene',
@@ -1070,6 +1082,27 @@
       scenes: {},
       currentSceneId: null,
       currentHudModel: null,
+      
+      // Factory function to create HUD models from assets
+      createHudModel(sceneId) {
+        const hudModel = document.createElement('a-gltf-model');
+        hudModel.id = `hud-model-${sceneId}`;
+        hudModel.setAttribute('src', ASSET_BY_SCENE[sceneId]);
+        
+        // Set neutral transforms on the model itself
+        hudModel.setAttribute('position', '0 0 0');
+        hudModel.setAttribute('scale', '1 1 1');
+        hudModel.setAttribute('rotation', '0 0 0');
+        
+        // Apply per-scene animation
+        if (sceneId === 'face-scene') {
+          hudModel.setAttribute('animation', ANIMATION_BY_SCENE[sceneId]);
+        } else if (sceneId === 'frog-scene') {
+          hudModel.setAttribute('animation-mixer', ANIMATION_BY_SCENE[sceneId]);
+        }
+        
+        return hudModel;
+      },
       
       init() {
         // Cache scene elements
@@ -1139,53 +1172,23 @@
       
       reparentModelToHUD(sceneId, targetName) {
         const hudRoot = document.getElementById('hud-root');
-        const originalScene = this.scenes[sceneId];
         
-        if (!hudRoot || !originalScene) {
-          console.error('🎬 HUD root or original scene not found');
+        if (!hudRoot) {
+          console.error('🎬 HUD root not found');
           return;
         }
         
-        // Find the model element within the scene
-        let modelElement;
-        if (sceneId === 'face-scene') {
-          modelElement = originalScene.querySelector('#face-model');
-        } else if (sceneId === 'frog-scene') {
-          modelElement = originalScene.querySelector('#moonwalk-model');
-        }
-        
-        if (!modelElement) {
-          console.error(`🎬 Model element not found in ${sceneId}`);
+        // Guard against double-spawn
+        if (this.state !== AppState.SCANNING) {
           return;
         }
         
-        // Clone the model to avoid disrupting the original
-        const hudModel = modelElement.cloneNode(true);
-        hudModel.id = `hud-${modelElement.id}`;
+        // Create fresh HUD model from assets
+        const hudModel = this.createHudModel(sceneId);
         
-        // CRITICAL: Remove any competing transform components from HUD clone
-        // These would override our canonical pose configuration
-        hudModel.removeAttribute('smooth-pose');
-        hudModel.removeAttribute('animation');
-        hudModel.removeAttribute('animation-mixer'); // Keep animations but not transforms
-        
-        // Re-add only the animation-mixer for model animations (not transforms)
-        if (sceneId === 'frog-scene') {
-          hudModel.setAttribute('animation-mixer', 'clip: *');
-        } else if (sceneId === 'face-scene') {
-          // Face model keeps its rotation animation
-          hudModel.setAttribute('animation', 'property: rotation; to: 0 360 0; loop: true; dur: 5000');
-        }
-        
-        // Handle GLB root offsets by wrapping model in a container
-        // This ensures our canonical pose is applied to the container, not affected by GLB pivot points
+        // Create container for canonical pose application
         const hudContainer = document.createElement('a-entity');
-        hudContainer.id = `hud-container-${modelElement.id}`;
-        
-        // Reset model to origin within container (neutralize GLB offsets)
-        hudModel.setAttribute('position', '0 0 0');
-        hudModel.setAttribute('scale', '1 1 1');
-        hudModel.setAttribute('rotation', '0 0 0');
+        hudContainer.id = `hud-container-${sceneId}`;
         
         // Apply canonical pose to CONTAINER (single source of truth)
         const poseConfig = MODEL_POSE_CONFIG[sceneId];
@@ -1231,7 +1234,7 @@
         this.currentHudModel = hudModel;
         this.currentSceneId = sceneId;
         
-        console.log(`🎬 Model ${modelElement.id} reparented to HUD at fixed position`);
+        console.log(`🎬 Model spawned from assets to HUD at fixed position`);
       },
       
       
@@ -1563,35 +1566,8 @@
     };
     
     ARtedita.fixModelPositions = () => {
-      // Fix position/scale corruption after AR ready
-      setTimeout(() => {
-        const moonwalkModel = document.getElementById('moonwalk-model');
-        const faceModel = document.getElementById('face-model');
-        
-        if (moonwalkModel) {
-          // Apply pose from centralized configuration
-          const poseConfig = MODEL_POSE_CONFIG['frog-scene'];
-          if (poseConfig) {
-            moonwalkModel.object3D.position.set(
-              poseConfig.position.x,
-              poseConfig.position.y,
-              poseConfig.position.z
-            );
-            moonwalkModel.object3D.scale.set(
-              poseConfig.scale.x,
-              poseConfig.scale.y,
-              poseConfig.scale.z
-            );
-          }
-          console.log('Fixed moonwalk model positioning');
-        }
-        
-        if (faceModel) {
-          faceModel.object3D.position.set(0, -1, 0);
-          faceModel.object3D.scale.set(1, 1, 1);
-          console.log('Fixed face model positioning');
-        }
-      }, 500);
+      // No longer needed - HUD models are spawned fresh from assets with correct poses
+      console.log('Model position fixing skipped - using factory pattern');
     };
     
     ARtedita.hideLoaderAndShowOnboarding = () => {
