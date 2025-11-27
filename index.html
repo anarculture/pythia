@@ -49,10 +49,7 @@
       <ar-trackers>
         <!-- database-size: 'sm' | 'md' | 'lg' determines the dictionary size -->
         <ar-image-tracker resolution="lg" database-size="md">
-          <!-- 
-            Add your reference images here. 
-            Example: <ar-reference-image name="my-target" src="assets/my-image.png"></ar-reference-image>
-          -->
+          <ar-reference-image name="marker" src="marker.png"></ar-reference-image>
         </ar-image-tracker>
       </ar-trackers>
 
@@ -61,12 +58,14 @@
         Use <ar-root reference-image="name"> to attach content to a tracker.
       -->
       
-      <!-- Example Content (Commented out until you add a reference image) -->
-      <!--
-      <ar-root reference-image="my-target">
-        <a-box color="red" position="0 0 0.5" scale="0.5 0.5 0.5"></a-box>
+      <ar-root reference-image="marker">
+        <a-entity 
+          gltf-model="url(2geogen-asset.glb)" 
+          position="0 0 0" 
+          scale="0.5 0.5 0.5"
+          animation="property: rotation; to: 0 360 0; loop: true; dur: 10000; easing: linear">
+        </a-entity>
       </ar-root>
-      -->
 
       <!-- The Camera -->
       <ar-camera>
