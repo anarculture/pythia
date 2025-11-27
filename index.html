@@ -67,6 +67,12 @@
           scale="0.5 0.5 0.5"
           animation="property: rotation; to: 0 360 0; loop: true; dur: 10000; easing: linear">
         </a-entity>
+        
+        <!-- Optimized Lighting -->
+        <a-light type="ambient" color="#ffffff" intensity="2.51"></a-light>
+        <a-light type="directional" position="2 4 2" color="#ffffff" intensity="3.14" shadow="cast: true"></a-light>
+        <a-light type="point" position="-1 2 1" color="#4CAF50" intensity="30" decay="2"></a-light>
+        <a-light type="point" position="1 2 1" color="#2196F3" intensity="30" decay="2"></a-light>
       </ar-root>
 
       <!-- The Camera -->
@@ -96,6 +102,65 @@
         console.log(`Target lost: ${targetName}`);
         document.querySelector('#info p').textContent = `Lost: ${targetName}`;
       });
+    </script>
+
+    <!-- Adaptive tracker: fast acquisition (md) → stable (lg) after 1s -->
+    <script>
+    (function adaptiveTrackerRes(){
+      const tracker = document.querySelector('ar-image-tracker');
+      const cam = document.querySelector('ar-camera-source');
+      if (!tracker || !cam) return;
+
+      // Ensure camera is high; start tracker easier to acquire
+      cam.setAttribute('resolution', 'lg');
+      tracker.setAttribute('resolution', 'md');
+
+      let timer = 0;
+      document.addEventListener('artargetfound', (ev)=>{
+        const ref = ev.detail && ev.detail.referenceImage;
+        if (ref && ref.name !== 'marker') return;
+        clearTimeout(timer);
+        timer = setTimeout(()=> tracker.setAttribute('resolution','lg'), 1000);
+      });
+      document.addEventListener('artargetlost', (ev)=>{
+        const ref = ev.detail && ev.detail.referenceImage;
+        if (ref && ref.name !== 'marker') return;
+        clearTimeout(timer);
+        tracker.setAttribute('resolution','md'); // easier relock if lost
+      });
+    })();
+    </script>
+
+    <!-- Camera focus/zoom for small marker recognition -->
+    <script>
+    (function tuneCamera() {
+      // Retry until <video> has stream
+      let tries = 0;
+      const tick = async () => {
+        tries++;
+        const vid = document.querySelector('ar-viewport video, video');
+        const track = vid && vid.srcObject && vid.srcObject.getVideoTracks && vid.srcObject.getVideoTracks()[0];
+        if (!track) { if (tries < 30) setTimeout(tick, 300); return; }
+
+        const caps = (track.getCapabilities && track.getCapabilities()) || {};
+        const adv = [];
+
+        // Continuous focus / exposure / white balance
+        if (caps.focusMode && caps.focusMode.includes('continuous')) adv.push({ focusMode: 'continuous' });
+        if (caps.exposureMode && caps.exposureMode.includes('continuous')) adv.push({ exposureMode: 'continuous' });
+        if (caps.whiteBalanceMode && caps.whiteBalanceMode.includes('continuous')) adv.push({ whiteBalanceMode: 'continuous' });
+
+        // Slight zoom for small markers
+        if (caps.zoom) {
+          const z = Math.min(caps.zoom.max || 2.5, 2.5);
+          adv.push({ zoom: z });
+        }
+
+        try { await track.applyConstraints({ advanced: adv }); }
+        catch(e) { /* ignore unsupported constraints */ }
+      };
+      tick();
+    })();
     </script>
   </body>
 </html>
