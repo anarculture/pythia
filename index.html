@@ -72,6 +72,10 @@
         <!-- Debug Box: Should be visible if AR is working -->
         <a-box position="0 0.5 0" scale="0.5 0.5 0.5" color="red" animation="property: rotation; to: 0 360 0; loop: true; dur: 5000"></a-box>
         
+        <!-- Scale Test Boxes -->
+        <a-box position="1 0 0" scale="10 10 10" color="green" material="opacity: 0.5"></a-box>
+        <a-box position="-1 0 0" scale="100 100 100" color="blue" material="opacity: 0.5"></a-box>
+        
         <!-- Optimized Lighting -->
         <a-light type="ambient" color="#ffffff" intensity="2.51"></a-light>
         <a-light type="directional" position="2 4 2" color="#ffffff" intensity="3.14" shadow="cast: true"></a-light>
@@ -117,6 +121,26 @@
         console.error('3D Model Failed to Load:', e);
         document.querySelector('#info p').textContent += ' | Model Error!';
       });
+
+      // Debug Coordinates
+      setInterval(() => {
+        const root = document.querySelector('ar-root');
+        if (root && root.object3D && root.object3D.parent && root.object3D.parent.visible) {
+          const pos = new THREE.Vector3();
+          const scale = new THREE.Vector3();
+          root.object3D.parent.getWorldPosition(pos);
+          root.object3D.parent.getWorldScale(scale);
+          
+          const info = `Pos: ${pos.x.toFixed(1)}, ${pos.y.toFixed(1)}, ${pos.z.toFixed(1)} | Scale: ${scale.x.toFixed(2)}`;
+          const p = document.querySelector('#info p');
+          if (!p.textContent.includes('Pos:')) {
+             p.textContent = p.textContent.split('| Pos:')[0] + ' | ' + info;
+          } else {
+             // Update existing pos text
+             p.textContent = p.textContent.replace(/\| Pos:.*$/, '| ' + info);
+          }
+        }
+      }, 500);
     </script>
 
     <!-- Adaptive tracker: fast acquisition (md) → stable (lg) after 1s -->
