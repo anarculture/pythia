@@ -1,22 +1,73 @@
-<!doctype html>
+<!DOCTYPE html>
 <html>
     <head>
         <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1, maximum-scale=1">
+        <meta
+            name="viewport"
+            content="width=device-width, user-scalable=no, minimum-scale=1, maximum-scale=1"
+        >
         <title>encantar.js WebAR template</title>
         <link href="../assets/demo.css" rel="stylesheet">
         <script src="../../dist/encantar.min.js"></script>
-        <script src="demo.js"></script>
+        <script
+            src="https://cdn.jsdelivr.net/npm/aframe@1.7.1/dist/aframe-v1.7.1.min.js"
+        ></script>
+        <script src="../../dist/plugins/aframe-with-encantar.min.js"></script>
+        <script src="../../dist/addons/ar-scan-gimmick.min.js"></script>
+        <script src="../../dist/addons/gltf-anim.min.js"></script>
     </head>
     <body>
-        <div id="ar-viewport">
-            <div id="ar-hud" hidden>
-                <a id="info" href="NOTICE.html" draggable="false"></a>
-                <a id="like" href="https://ko-fi.com/alemart" draggable="false"></a>
-                <img id="scan" src="../assets/scan.png" draggable="false">
-            </div>
-        </div>
-        <img id="mage" src="../assets/mage.webp" hidden>
-        <img id="cat" src="../assets/cat.webp" hidden>
+        <!-- The AR scene -->
+        <a-scene
+            encantar="stats: true; gizmos: true"
+            loading-screen="enabled: false"
+        >
+            <ar-sources>
+                <ar-camera-source></ar-camera-source>
+            </ar-sources>
+
+            <ar-trackers>
+                <ar-image-tracker>
+                    <ar-reference-image
+                        name="marker"
+                        src="../assets/marker.png"
+                    ></ar-reference-image>
+                </ar-image-tracker>
+            </ar-trackers>
+
+            <ar-viewport>
+                <ar-hud>
+                    <a id="info" href="NOTICE.html" draggable="false"></a>
+                    <a
+                        id="like"
+                        href="https://ko-fi.com/alemart"
+                        draggable="false"
+                    ></a>
+                    <ar-scan-gimmick opacity="0.75"></ar-scan-gimmick>
+                </ar-hud>
+            </ar-viewport>
+
+            <ar-camera></ar-camera>
+
+            <ar-root reference-image="marker">
+                <a-entity rotation="-90 0 0" position="0 -0.8 0">
+                    <a-light type="ambient" intensity="1.0"></a-light>
+
+                    <a-entity
+                        gltf-model="#maduro-model"
+                        rotation="90 0 0"
+                        scale="0.7 0.7 0.7"
+                    >
+                    </a-entity>
+                </a-entity>
+            </ar-root>
+
+            <a-assets>
+                <a-asset-item
+                    id="maduro-model"
+                    src="../assets/maduro.glb"
+                ></a-asset-item>
+            </a-assets>
+        </a-scene>
     </body>
 </html>
