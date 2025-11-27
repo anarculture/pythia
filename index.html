@@ -62,11 +62,15 @@
       
       <ar-root reference-image="marker">
         <a-entity 
+          id="ar-model"
           gltf-model="url(2geogen-asset.glb)" 
           position="0 0 0" 
           scale="0.5 0.5 0.5"
           animation="property: rotation; to: 0 360 0; loop: true; dur: 10000; easing: linear">
         </a-entity>
+        
+        <!-- Debug Box: Should be visible if AR is working -->
+        <a-box position="0 0.5 0" scale="0.5 0.5 0.5" color="red" animation="property: rotation; to: 0 360 0; loop: true; dur: 5000"></a-box>
         
         <!-- Optimized Lighting -->
         <a-light type="ambient" color="#ffffff" intensity="2.51"></a-light>
@@ -101,6 +105,17 @@
         const targetName = ev.detail.referenceImage.name;
         console.log(`Target lost: ${targetName}`);
         document.querySelector('#info p').textContent = `Lost: ${targetName}`;
+      });
+
+      // Debug Model Loading
+      const model = document.querySelector('#ar-model');
+      model.addEventListener('model-loaded', () => {
+        console.log('3D Model Loaded Successfully!');
+        document.querySelector('#info p').textContent += ' | Model Loaded';
+      });
+      model.addEventListener('model-error', (e) => {
+        console.error('3D Model Failed to Load:', e);
+        document.querySelector('#info p').textContent += ' | Model Error!';
       });
     </script>
 
